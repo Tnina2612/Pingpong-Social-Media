@@ -1,13 +1,28 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get, HttpCode, HttpStatus, Query } from "@nestjs/common";
 import { GetSampleTextDto } from "./dto/get-sample-text.dto";
 import { GetSampleTextResponse } from "./response/get-sample-text.response";
 import { SampleService } from "./sample.service";
+import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 
 @Controller("sample")
 export class SampleController {
     constructor(private readonly sampleService: SampleService) {}
 
+    @ApiOperation({
+        summary: "Get sample text",
+        description: "Returns a formatted text string with the provided name",
+    })
+    @ApiResponse({
+        status: 200,
+        description: "Sample text retrieved successfully",
+        type: GetSampleTextResponse,
+    })
+    @ApiResponse({
+        status: 400,
+        description: "Invalid input - name must be a string",
+    })
     @Get()
+    @HttpCode(HttpStatus.OK)
     async getSampleText(
         @Query() query: GetSampleTextDto,
     ): Promise<GetSampleTextResponse> {
