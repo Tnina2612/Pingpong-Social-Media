@@ -12,7 +12,7 @@ export const ErrorPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-gray-100 px-6">
+    <div className="fixed inset-0 min-h-screen flex flex-col items-center justify-center bg-gray-900 text-gray-100 px-6 w-screen">
       <div className="p-6 bg-red-500/10 rounded-full mb-6">
         <AlertTriangle className="w-20 h-20 text-red-400" />
       </div>
@@ -24,7 +24,7 @@ export const ErrorPage = () => {
       </p>
       <Link
         to="/"
-        className="px-4 py-2 bg-red-500/20 text-red-300 border border-red-400 rounded-lg hover:bg-red-500/30 transition"
+        className="px-4 py-2 bg-red-500/20 text-red-300 border border-red-400 rounded-lg hover:bg-red-500/30 transition "
       >
         Come back home
       </Link>
