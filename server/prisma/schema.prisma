@@ -40,7 +40,7 @@ model User {
 model Friendship {
   id           String   @id @default(uuid())
   createdAt    DateTime @default(now())
-  status       FriendshipStatus
+  status       FriendshipStatus @default(PENDING)
 
   requester    User     @relation(name: "SentRequests", fields: [requesterId], references: [id])
   requesterId  String
@@ -60,7 +60,7 @@ model Post {
   authorId   String
   
   content    String
-  mediaUrls  String[]
+  mediaUrls  String[] @default([])
 
   comments   Comment[]
   likes      Like[]
@@ -138,7 +138,7 @@ model Member {
   serverId  String
 
   nickname  String?
-  roles     String[] // Placeholder for Role IDs
+  roles     String[] @default([]) // Placeholder for Role IDs
 
   @@unique([userId, serverId]) // User can only be in a server once
 }
@@ -149,7 +149,7 @@ model Message {
   updatedAt   DateTime @updatedAt
 
   content     String?
-  attachments String[]
+  attachments String[] @default([])
 
   channel     Channel  @relation(fields: [channelId], references: [id])
   channelId   String
