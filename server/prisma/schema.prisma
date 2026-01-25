@@ -11,3 +11,165 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id                String   @id @default(uuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  email             String   @unique
+  username          String   @unique
+  password          String
+  avatar            String?
+  bio               String?
+  lastSeen          DateTime   @default(now())
+  // status            UserStatus @default(OFFLINE): Store this in Redis
+
+  posts             Post[]
+  comments          Comment[]
+  likes             Like[]
+
+  sentRequests      Friendship[]  @relation(name: "SentRequests")
+  receivedRequests  Friendship[]  @relation(name: "ReceivedRequests")
+
+  ownedServers      Server[]
+  memberships       Member[]
+  messages          Message[]
+}
+
+model Friendship {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  status       FriendshipStatus @default(PENDING)
+
+  requester    User     @relation(name: "SentRequests", fields: [requesterId], references: [id])
+  requesterId  String
+
+  receiver     User     @relation(name: "ReceivedRequests", fields: [receiverId], references: [id])
+  receiverId   String
+
+  @@unique([requesterId, receiverId]) // Prevent duplicate requests
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   String
+  
+  content    String
+  mediaUrls  String[] @default([])
+
+  comments   Comment[]
+  likes      Like[]
+}
+
+model Comment {
+  id         String    @id @default(uuid())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  author     User      @relation(fields: [authorId], references: [id])
+  authorId   String
+  post       Post      @relation(fields: [postId], references: [id])
+  postId     String
+ 
+  parentId   String?
+  parent     Comment?  @relation(name: "CommonReplies", fields: [parentId], references: [id])
+  replies    Comment[] @relation(name: "CommonReplies")
+
+  content    String
+  likes      Like[]
+}
+
+model Like {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+
+  post        Post?    @relation(fields: [postId], references: [id])
+  postId      String?
+  comment     Comment? @relation(fields: [commentId], references: [id])
+  commentId   String?
+  // Validation: In Like service, handle a Like to not exist for both a Post and a Comment simultaneously
+  // Prisma cannot enforce "XOR" in the schema easily
+
+  targetType  TargetLikeType
+
+  @@unique([postId, userId]) // Prevent duplicate likes
+  @@unique([commentId, userId])
+}
+
+model Server {
+  id        String   @id @default(uuid())
+  name      String
+  iconUrl   String?
+
+  owner     User     @relation(fields: [ownerId], references: [id])
+  ownerId   String
+
+  channels  Channel[]
+  members   Member[]
+}
+
+model Channel {
+  id        String   @id @default(uuid())
+  name      String
+  type      ChannelType
+
+  server    Server   @relation(fields: [serverId], references: [id])
+  serverId  String
+
+  messages  Message[]
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  joinedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  server    Server   @relation(fields: [serverId], references: [id])
+  serverId  String
+
+  nickname  String?
+  roles     String[] @default([]) // Placeholder for Role IDs
+
+  @@unique([userId, serverId]) // User can only be in a server once
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  content     String?
+  attachments String[] @default([])
+
+  channel     Channel  @relation(fields: [channelId], references: [id])
+  channelId   String
+
+  sender      User     @relation(fields: [senderId], references: [id])  
+  senderId    String
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum TargetLikeType {
+  POST
+  COMMENT
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+}
