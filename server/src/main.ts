@@ -7,52 +7,52 @@ import { AppModule } from "./app.module";
 import { SampleModule } from "./sample/sample.module";
 
 export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
-    return [
-        bootstrap.toString(),
-        `bootstrap("${endpoint}", ${JSON.stringify(tagOrder)})`,
-    ];
+  return [
+    bootstrap.toString(),
+    `bootstrap("${endpoint}", ${JSON.stringify(tagOrder)})`,
+  ];
 }
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-    app.setGlobalPrefix("api");
-    app.enableCors();
-    app.useGlobalPipes(
-        new ValidationPipe({
-            transform: true,
-            whitelist: true,
-            forbidNonWhitelisted: true,
-        }),
-    );
+  app.setGlobalPrefix("api");
+  app.enableCors();
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
-    const configService = app.get(ConfigService);
-    const apiEndpoint = configService.get("SERVER_URL");
+  const configService = app.get(ConfigService);
+  const apiEndpoint = configService.get("SERVER_URL");
 
-    const config = new DocumentBuilder()
-        .addServer(apiEndpoint)
-        .setTitle("AniHub v1 API Docs")
-        .setVersion("1.0")
-        .build();
+  const config = new DocumentBuilder()
+    .addServer(apiEndpoint)
+    .setTitle("AniHub v1 API Docs")
+    .setVersion("1.0")
+    .build();
 
-    const { document, tags } = setupSwagger(app, config, {
-        include: [SampleModule],
-    });
+  const { document, tags } = setupSwagger(app, config, {
+    include: [SampleModule],
+  });
 
-    SwaggerModule.setup("/docs", app, document, {
-        customSiteTitle: "Pingpong v1 API Docs",
-        jsonDocumentUrl: "docs-json",
-        yamlDocumentUrl: "docs-yaml",
-        customJsStr: swaggerCustomScript(apiEndpoint, tags),
-        useGlobalPrefix: true,
-    });
+  SwaggerModule.setup("/docs", app, document, {
+    customSiteTitle: "Pingpong v1 API Docs",
+    jsonDocumentUrl: "docs-json",
+    yamlDocumentUrl: "docs-yaml",
+    customJsStr: swaggerCustomScript(apiEndpoint, tags),
+    useGlobalPrefix: true,
+  });
 
-    const nodeEnv = configService.get("NODE_ENV");
+  const nodeEnv = configService.get("NODE_ENV");
 
-    if (nodeEnv === "production") {
-        app.enableShutdownHooks();
-    }
+  if (nodeEnv === "production") {
+    app.enableShutdownHooks();
+  }
 
-    await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
