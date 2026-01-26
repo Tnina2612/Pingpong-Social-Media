@@ -1,6 +1,10 @@
 {
   "files.associations": {
     "*.css": "tailwindcss",
-    "*.scss": "tailwindcss",
+    "*.scss": "tailwindcss"
   },
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit",
+    "source.fixAll.biome": "explicit"
+  }
 }

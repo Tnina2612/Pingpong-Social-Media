@@ -15,9 +15,7 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "a11y": {
-        "noAutofocus": "off"
-      },
+      "a11y": "off",
       "complexity": {
         "noBannedTypes": "off"
       },
@@ -28,7 +26,8 @@
         "noExplicitAny": "off",
         "noEmptyInterface": "off",
         "noRedeclare": "off",
-        "noConfusingVoidType": "off"
+        "noConfusingVoidType": "off",
+        "noArrayIndexKey": "off"
       },
       "style": {
         "useImportType": "off",
@@ -39,14 +38,17 @@
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "off"
+        "organizeImports": "on"
       }
     }
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "single",
+      "quoteStyle": "double",
       "trailingCommas": "all"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   },
   "json": {
@@ -69,22 +71,7 @@
   },
   "overrides": [
     {
-      "includes": ["client/**/*", "server/**/*"],
-      "javascript": {
-        "formatter": {
-          "quoteStyle": "double"
-        },
-        "parser": {
-          "unsafeParameterDecoratorsEnabled": true
-        }
-      },
-      "css": {
-        "formatter": {
-          "enabled": true,
-          "indentStyle": "space",
-          "indentWidth": 2
-        }
-      }
+      "includes": ["client/**/*", "server/**/*"]
     }
   ]
 }
