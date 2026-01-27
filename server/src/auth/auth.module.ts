@@ -17,10 +17,10 @@ import { UsersModule } from "src/users/users.module";
         configService: ConfigService,
       ): Promise<JwtModuleOptions> => ({
         secret:
-          configService.get<string>("JWT_SECRET") ||
+          configService.get<string>("JWT_ACCESS_SECRET") ||
           "your-secret-key-change-in-production",
         signOptions: {
-          expiresIn: configService.get("JWT_EXPIRES_IN") || "7d",
+          expiresIn: configService.get("JWT_ACCESS_EXPIRES_IN") || "7d",
         },
       }),
     }),
