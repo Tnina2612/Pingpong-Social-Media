@@ -8,10 +8,10 @@ import { Toaster } from "react-hot-toast";
 const client = new QueryClient();
 const router = Routes;
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={client}>
-      <Toaster position="top-center" />
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </StrictMode>,
+    <StrictMode>
+        <QueryClientProvider client={client}>
+            <Toaster position="top-center" />
+            <RouterProvider router={router} />
+        </QueryClientProvider>
+    </StrictMode>,
 );
