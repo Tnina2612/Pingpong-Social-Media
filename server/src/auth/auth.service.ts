@@ -1,15 +1,15 @@
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { PrismaClient } from "@prisma/client";
 import { RegisterDto } from "./dto/register.dto";
 import * as bcrypt from "bcrypt";
 import { LoginDto } from "./dto/login.dto";
 import { ConfigService } from "@nestjs/config";
 import { Response } from "express";
+import { PrismaService } from "src/prisma/prisma.service";
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaClient,
+    private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
   ) {}

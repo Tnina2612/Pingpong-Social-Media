@@ -11,6 +11,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+
 }
 
 model User {
@@ -25,6 +26,9 @@ model User {
   bio               String?
   lastSeen          DateTime   @default(now())
   refreshToken      String?
+  isActivate        Boolean @default(false)
+  emailVerifyToken  String?
+  emailVerifyExpire DateTime?
   // status            UserStatus @default(OFFLINE): Store this in Redis
 
   posts             Post[]
