@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { RegisterDto } from "./dto/register.dto";
 import * as bcrypt from "bcrypt";
@@ -6,23 +6,35 @@ import { LoginDto } from "./dto/login.dto";
 import { ConfigService } from "@nestjs/config";
 import { Response } from "express";
 import { PrismaService } from "src/prisma/prisma.service";
+import Redis from "ioredis";
+import { MailService } from "src/mail/mail.service";
+import { VerifyOtpDto } from "./dto/verifyotp.dto";
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
+    private mail: MailService,
+    @Inject("REDIS") private redis: Redis,
   ) {}
 
   async register(dto: RegisterDto) {
     const hash = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
+
+    const otp = this.generateOtp();
+    const otpHash = await bcrypt.hash(otp, 10);
+    await this.prisma.user.create({
       data: {
         ...dto,
         password: hash,
       },
     });
-    return this.signToken(user.id);
+
+    await this.redis.set(`email:otp:${dto.email}`, otpHash, "EX", 300);
+
+    await this.mail.sendOtpMail(dto.email, otp);
+    return { message: "OTP is sent to email" };
   }
 
   async login(dto: LoginDto) {
@@ -31,7 +43,7 @@ export class AuthService {
         username: dto.username,
       },
     });
-    if (!user) {
+    if (!user || !user.isActivate) {
       throw new ForbiddenException("Invalid credentials");
     }
     const match = await bcrypt.compare(dto.password, user.password);
@@ -101,5 +113,67 @@ export class AuthService {
       path: "/auth/refresh",
     });
     return { message: "Logged out" };
+  }
+
+  async verifyOtp(dto: VerifyOtpDto) {
+    const otpKey = `email:otp:${dto.email}`;
+    const attemptKey = `otp:verify:${dto.email}`;
+    const attempts = await this.redis.incr(attemptKey);
+
+    if (attempts === 1) {
+      await this.redis.expire(attemptKey, 300);
+    }
+    if (attempts > 5) {
+      throw new ForbiddenException("Too many attempts. Please try again later");
+    }
+    const storedOtp = await this.redis.get(otpKey);
+
+    if (!storedOtp) {
+      throw new ForbiddenException("OTP expired or invalid");
+    }
+
+    const isValid = await bcrypt.compare(dto.otp, storedOtp);
+    if (!isValid) {
+      throw new ForbiddenException("Invalid OTP");
+    }
+    await this.prisma.user.update({
+      where: { email: dto.email },
+      data: { isActivate: true },
+    });
+
+    await this.redis.del(otpKey);
+    await this.redis.del(attemptKey);
+    return { message: "Email verified successfully" };
+  }
+  async resendOtp(email: string) {
+    const resendKey = `otp:resend:${email}`;
+    const otpKey = `email:otp:${email}`;
+
+    const isCoolDown = await this.redis.get(resendKey);
+    if (isCoolDown) {
+      throw new ForbiddenException("Please wait before requesting another OTP");
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new ForbiddenException("User not found");
+    }
+    if (user.isActivate) {
+      throw new ForbiddenException("Email is already activated");
+    }
+    const otp = this.generateOtp();
+    const otpHash = await bcrypt.hash(otp, 10);
+
+    await this.redis.set(otpKey, otpHash, "EX", 300);
+    await this.redis.set(resendKey, "1", "EX", 60);
+    await this.mail.sendOtpMail(email, otp);
+
+    return { message: "OTP resent successfully" };
+  }
+  private generateOtp() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }

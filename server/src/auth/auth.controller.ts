@@ -51,4 +51,8 @@ export class AuthController {
   ) {
     return this.authService.logout(userId, res);
   }
+  @Post("resent-otp")
+  resendOtp(@Body("email") email: string) {
+    return this.authService.resendOtp(email);
+  }
 }
