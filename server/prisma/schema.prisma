@@ -5,11 +5,13 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
+  
 }
 
 datasource db {
   provider = "postgresql"
+
 }
 
 model User {
@@ -23,6 +25,8 @@ model User {
   avatar            String?
   bio               String?
   lastSeen          DateTime   @default(now())
+  refreshToken      String?
+  isActivate        Boolean @default(false)
   // status            UserStatus @default(OFFLINE): Store this in Redis
 
   posts             Post[]
