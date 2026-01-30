@@ -8,16 +8,14 @@
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
-    "indentWidth": 4,
+    "indentWidth": 2,
     "lineWidth": 80
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
-      "a11y": {
-        "noAutofocus": "off"
-      },
+      "a11y": "off",
       "complexity": {
         "noBannedTypes": "off"
       },
@@ -26,9 +24,10 @@
       },
       "suspicious": {
         "noExplicitAny": "off",
-        "noEmptyInterface":"off",
+        "noEmptyInterface": "off",
         "noRedeclare": "off",
-        "noConfusingVoidType": "off"
+        "noConfusingVoidType": "off",
+        "noArrayIndexKey": "off"
       },
       "style": {
         "useImportType": "off",
@@ -39,33 +38,40 @@
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "off"
+        "organizeImports": "on"
       }
     }
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "single",
+      "quoteStyle": "double",
       "trailingCommas": "all"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   },
   "json": {
     "formatter": {
       "enabled": true,
-      "trailingCommas": "none"
+      "trailingCommas": "none",
+      "indentStyle": "space",
+      "indentWidth": 2
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    },
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2
     }
   },
   "overrides": [
     {
-      "includes": ["client/**/*", "server/**/*"],
-      "javascript": {
-        "formatter": {
-          "quoteStyle": "double"
-        },
-        "parser": {
-          "unsafeParameterDecoratorsEnabled": true
-        }
-      }
+      "includes": ["client/**/*", "server/**/*"]
     }
   ]
 }
