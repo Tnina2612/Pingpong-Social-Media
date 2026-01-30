@@ -1,15 +1,20 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { GetUser } from "./decorators/get-user.decorator";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
+import { VerifyOtpDto } from "./dto/verifyotp.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshGuard } from "./guards/refresh.guard";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private config: ConfigService,
+  ) {}
 
   @Post("register")
   register(@Body() dto: RegisterDto) {
@@ -22,11 +27,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const tokens = await this.authService.login(dto);
-    res.cookie("refeshToken", tokens.refreshToken, {
+    res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: this.config.get<string>("NODE_ENV") === "production",
       sameSite: "strict",
-      path: "auth/refresh",
+      path: "/auth/refresh",
     });
     return {
       accessToken: tokens.accessToken,
@@ -39,7 +44,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = req.cookies["refreshToken"];
+    const refreshToken = req.cookies.refreshToken;
     return this.authService.refreshToken(refreshToken, res);
   }
 
@@ -51,7 +56,13 @@ export class AuthController {
   ) {
     return this.authService.logout(userId, res);
   }
-  @Post("resent-otp")
+
+  @Post("verify-otp")
+  async verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.authService.verifyOtp(dto);
+  }
+
+  @Post("resend-otp")
   resendOtp(@Body("email") email: string) {
     return this.authService.resendOtp(email);
   }

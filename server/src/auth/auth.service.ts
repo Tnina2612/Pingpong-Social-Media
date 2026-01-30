@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
@@ -9,6 +10,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { VerifyOtpDto } from "./dto/verifyotp.dto";
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -18,38 +20,6 @@ export class AuthService {
     private mail: MailService,
     @Inject("REDIS") private redis: Redis,
   ) {}
-
-  async register(dto: RegisterDto) {
-    const hash = await bcrypt.hash(dto.password, 10);
-
-    const otp = this.generateOtp();
-    const otpHash = await bcrypt.hash(otp, 10);
-    await this.prisma.user.create({
-      data: {
-        ...dto,
-        password: hash,
-      },
-    });
-
-    await this.redis.set(`email:otp:${dto.email}`, otpHash, "EX", 300);
-
-    await this.mail.sendOtpMail(dto.email, otp);
-    return { message: "OTP is sent to email" };
-  }
-
-  async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        username: dto.username,
-      },
-    });
-    if (!user || !user.isActivate) {
-      throw new ForbiddenException("Invalid credentials");
-    }
-    const match = await bcrypt.compare(dto.password, user.password);
-    if (!match) throw new ForbiddenException("Invalid credentials");
-    return this.signToken(user.id);
-  }
 
   private async signToken(userId: string) {
     const payload = { sub: userId };
@@ -74,9 +44,45 @@ export class AuthService {
       data: { refreshToken: hashed },
     });
   }
+
+  private generateOtp() {
+    return randomInt(100000, 1000000).toString();
+  }
+
+  async register(dto: RegisterDto) {
+    const hash = await bcrypt.hash(dto.password, 10);
+    const otp = this.generateOtp();
+    const otpHash = await bcrypt.hash(otp, 10);
+
+    await this.prisma.user.create({
+      data: {
+        ...dto,
+        password: hash,
+      },
+    });
+    await this.redis.set(`email:otp:${dto.email}`, otpHash, "EX", 300);
+    await this.mail.sendOtpMail(dto.email, otp);
+
+    return { message: "OTP is sent to email" };
+  }
+
+  async login(dto: LoginDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        username: dto.username,
+      },
+    });
+    if (!user || !user.isActivated) {
+      throw new ForbiddenException("Invalid credentials");
+    }
+    const match = await bcrypt.compare(dto.password, user.password);
+    if (!match) throw new ForbiddenException("Invalid credentials");
+    return this.signToken(user.id);
+  }
+
   async refreshToken(refreshToken: string, res: Response) {
     if (!refreshToken) {
-      throw new ForbiddenException("No fresh token");
+      throw new ForbiddenException("No refresh token");
     }
     const payload = await this.jwt.verify(refreshToken, {
       secret: this.config.get<string>("JWT_REFRESH_TOKEN"),
@@ -95,7 +101,7 @@ export class AuthService {
     const tokens = await this.signToken(user.id);
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: this.config.get<string>("NODE_ENV") === "production",
       sameSite: "strict",
       path: "/auth/refresh",
     });
@@ -138,13 +144,14 @@ export class AuthService {
     }
     await this.prisma.user.update({
       where: { email: dto.email },
-      data: { isActivate: true },
+      data: { isActivated: true },
     });
 
     await this.redis.del(otpKey);
     await this.redis.del(attemptKey);
     return { message: "Email verified successfully" };
   }
+
   async resendOtp(email: string) {
     const resendKey = `otp:resend:${email}`;
     const otpKey = `email:otp:${email}`;
@@ -161,7 +168,7 @@ export class AuthService {
     if (!user) {
       throw new ForbiddenException("User not found");
     }
-    if (user.isActivate) {
+    if (user.isActivated) {
       throw new ForbiddenException("Email is already activated");
     }
     const otp = this.generateOtp();
@@ -172,8 +179,5 @@ export class AuthService {
     await this.mail.sendOtpMail(email, otp);
 
     return { message: "OTP resent successfully" };
-  }
-  private generateOtp() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }

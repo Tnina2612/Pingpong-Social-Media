@@ -5,6 +5,7 @@ import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
+import { AuthModule } from "./auth/auth.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
 import { SampleModule } from "./sample/sample.module";
 export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
@@ -38,7 +39,7 @@ async function bootstrap() {
     .build();
 
   const { document, tags } = setupSwagger(app, config, {
-    include: [SampleModule],
+    include: [SampleModule, AuthModule],
   });
 
   SwaggerModule.setup("/docs", app, document, {
