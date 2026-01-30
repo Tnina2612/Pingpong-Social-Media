@@ -3,10 +3,10 @@ import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { AppModule } from "./app.module";
-import { SampleModule } from "./sample/sample.module";
 import cookieParser from "cookie-parser";
+import { AppModule } from "./app.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
+import { SampleModule } from "./sample/sample.module";
 export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
   return [
     bootstrap.toString(),
