@@ -1,13 +1,12 @@
 import { createBrowserRouter } from "react-router-dom";
 import { ErrorPage } from "../errors/error-page";
-export const Routes = createBrowserRouter([
-    {
-        path: "",
-        lazy: async () => {
-            const { default: App } = await import("../App");
-            return { Component: App };
-        },
-        ErrorBoundary: ErrorPage,
+
+export const appRouter = createBrowserRouter([
+  {
+    path: "",
+    lazy: async () => {
+      const { default: App } = await import("../App");
+      return { Component: App };
     },
     {
         path: "login",

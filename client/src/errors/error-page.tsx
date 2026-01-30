@@ -1,15 +1,15 @@
-import { useRouteError, Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
-import toast from "react-hot-toast";
 import { useEffect } from "react";
+import toast from "react-hot-toast";
+import { Link, useRouteError } from "react-router-dom";
 
 export const ErrorPage = () => {
     const error = useRouteError();
     console.log(error);
 
-    useEffect(() => {
-        toast.error("Failed to convert page");
-    }, []);
+  useEffect(() => {
+    toast.error("Failed to load the page. Please refresh or try again later.");
+  }, []);
 
     return (
         <div className="fixed inset-0 min-h-screen flex flex-col items-center justify-center bg-gray-900 text-gray-100 px-6 w-screen">
