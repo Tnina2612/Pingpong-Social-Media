@@ -7,9 +7,7 @@ import { Response } from "express";
 import Redis from "ioredis";
 import { MailService } from "src/mail/mail.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { LoginDto } from "./dto/login.dto";
-import { RegisterDto } from "./dto/register.dto";
-import { VerifyOtpDto } from "./dto/verifyotp.dto";
+import { LoginDto, RegisterDto, VerifyOtpDto } from "./dto";
 
 @Injectable()
 export class AuthService {
@@ -98,6 +96,7 @@ export class AuthService {
     if (!isValid) {
       throw new ForbiddenException("Invalid credentials");
     }
+
     const tokens = await this.signToken(user.id);
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
@@ -105,6 +104,7 @@ export class AuthService {
       sameSite: "strict",
       path: "/auth/refresh",
     });
+
     return {
       accessToken: tokens.accessToken,
     };

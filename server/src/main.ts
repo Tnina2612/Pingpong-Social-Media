@@ -8,6 +8,7 @@ import { AppModule } from "./app.module";
 import { AuthModule } from "./auth/auth.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
 import { SampleModule } from "./sample/sample.module";
+
 export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
   return [
     bootstrap.toString(),
@@ -29,9 +30,9 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new PrismaExceptionFilter());
   app.use(cookieParser());
+
   const configService = app.get(ConfigService);
   const apiEndpoint = configService.get("SERVER_URL");
-
   const config = new DocumentBuilder()
     .addServer(apiEndpoint)
     .setTitle("AniHub v1 API Docs")
