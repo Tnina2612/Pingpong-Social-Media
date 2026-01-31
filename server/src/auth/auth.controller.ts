@@ -16,6 +16,7 @@ export class AuthController {
     private config: ConfigService,
   ) {}
 
+  // POST /api/auth/register
   @ApiOperation({
     summary: "Register a new user",
     description:
@@ -35,6 +36,7 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  // POST /api/auth/login
   @ApiOperation({
     summary: "Login user",
     description:
@@ -66,6 +68,7 @@ export class AuthController {
     };
   }
 
+  // POST /api/auth/refresh
   @ApiOperation({
     summary: "Refresh access token",
     description: "Generates new access token using refresh token from cookie",
@@ -89,6 +92,7 @@ export class AuthController {
     return this.authService.refreshToken(refreshToken, res);
   }
 
+  // POST /api/auth/logout
   @ApiOperation({
     summary: "Logout user",
     description: "Invalidates user session and clears refresh token cookie",
@@ -111,6 +115,7 @@ export class AuthController {
     return this.authService.logout(userId, res);
   }
 
+  // POST /api/auth/verify-otp
   @ApiOperation({
     summary: "Verify OTP",
     description: "Verifies the OTP sent to user's email during registration",
@@ -129,6 +134,7 @@ export class AuthController {
     return this.authService.verifyOtp(dto);
   }
 
+  // POST /api/auth/resend-otp
   @ApiOperation({
     summary: "Resend OTP",
     description: "Resends verification OTP to the specified email address",
