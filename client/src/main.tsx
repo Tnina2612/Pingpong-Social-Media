@@ -10,10 +10,10 @@ const client = new QueryClient();
 const router = appRouter;
 
 createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <QueryClientProvider client={client}>
-            <Toaster position="top-center" />
-            <RouterProvider router={router} />
-        </QueryClientProvider>
-    </StrictMode>,
+  <StrictMode>
+    <QueryClientProvider client={client}>
+      <Toaster position="top-center" />
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  </StrictMode>,
 );

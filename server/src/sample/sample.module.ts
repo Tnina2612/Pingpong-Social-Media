@@ -3,7 +3,7 @@ import { SampleController } from "./sample.controller";
 import { SampleService } from "./sample.service";
 
 @Module({
-    controllers: [SampleController],
-    providers: [SampleService],
+  controllers: [SampleController],
+  providers: [SampleService],
 })
 export class SampleModule {}
