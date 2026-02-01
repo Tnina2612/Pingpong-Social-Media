@@ -3,7 +3,6 @@ import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
-import { MailService } from "./mail/mail.service";
 import { PrismaModule } from "./prisma/prisma.module";
 import { RedisModule } from "./redis/redis.module";
 import { SampleModule } from "./sample/sample.module";
@@ -22,6 +21,6 @@ import { UsersModule } from "./users/users.module";
     RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailService],
+  providers: [AppService],
 })
 export class AppModule {}

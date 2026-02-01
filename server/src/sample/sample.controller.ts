@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus, Query } from "@nestjs/common";
 import { ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { GetSampleTextDto } from "./dto/get-sample-text.dto";
-import { GetSampleTextResponse } from "./response/get-sample-text.response";
+import { GetSampleTextDto } from "./dto";
+import { GetSampleTextResponse } from "./response";
 import { SampleService } from "./sample.service";
 
 @Controller("sample")

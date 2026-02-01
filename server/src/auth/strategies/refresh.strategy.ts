@@ -9,7 +9,7 @@ export class RefreshStrategy extends PassportStrategy(Strategy, "jwt-refresh") {
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req) => req?.cookies?.refreshToken,
       ]),
-      secretOrKey: config.get<string>("JWT_REFRESH_TOKEN") || "",
+      secretOrKey: config.get<string>("JWT_REFRESH_SECRET") || "",
     });
   }
   validate(payload: { sub: string }) {

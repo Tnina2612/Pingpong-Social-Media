@@ -5,9 +5,11 @@ import { MailModule } from "src/mail/mail.module";
 import { UsersModule } from "src/users/users.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { JwtStrategy } from "./strategies/jwt.strategy";
+import { RefreshStrategy } from "./strategies/refresh.strategy";
+
 @Module({
   imports: [
-    ConfigModule,
     UsersModule,
     MailModule,
     JwtModule.registerAsync({
@@ -26,6 +28,6 @@ import { AuthService } from "./auth.service";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy, RefreshStrategy],
 })
 export class AuthModule {}
