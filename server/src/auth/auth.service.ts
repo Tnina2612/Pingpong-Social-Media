@@ -24,7 +24,7 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(payload),
       this.jwt.signAsync(payload, {
-        secret: this.config.get<string>("JWT_REFRESH_TOKEN"),
+        secret: this.config.get<string>("JWT_REFRESH_SECRET"),
         expiresIn: this.config.get("JWT_REFRESH_EXPIRES_IN") || "7d",
       }),
     ]);
@@ -83,7 +83,7 @@ export class AuthService {
       throw new ForbiddenException("No refresh token");
     }
     const payload = await this.jwt.verify(refreshToken, {
-      secret: this.config.get<string>("JWT_REFRESH_TOKEN"),
+      secret: this.config.get<string>("JWT_REFRESH_SECRET"),
     });
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },

@@ -7,6 +7,7 @@ import Redis from "ioredis";
   providers: [
     {
       provide: "REDIS",
+      inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         return new Redis({
           host: config.get<string>("REDIS_HOST") || "localhost",

@@ -10,7 +10,6 @@ import { RefreshStrategy } from "./strategies/refresh.strategy";
 
 @Module({
   imports: [
-    ConfigModule,
     UsersModule,
     MailModule,
     JwtModule.registerAsync({
