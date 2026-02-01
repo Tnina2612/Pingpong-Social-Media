@@ -1,5 +1,6 @@
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { apiClient } from "@/lib";
+import type { User } from "@/types";
 import type { ResponseMessage } from "@/types/response";
 import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
@@ -10,6 +11,12 @@ interface LoginProps {
   email: string;
   password: string;
 }
+interface LoginResponse {
+  id: string;
+  username: string;
+  avatar?: string | null;
+  access_token: string;
+}
 export const useLogin = () => {
   const navigate = useNavigate();
   return useMutation({
@@ -17,9 +24,12 @@ export const useLogin = () => {
       const res = await apiClient.post("/homepage", data);
       return res.data;
     },
-    onSuccess: async (res) => {
-      useAuthUser.setState({ access_token: res.access_token });
-      useAuthUser.setState({ authUser: res });
+    onSuccess: async (res: LoginResponse) => {
+      const { access_token, ...userData } = res;
+      useAuthUser.setState({
+        access_token,
+        authUser: userData as User,
+      });
       toast.success("Login successfully");
       navigate("/home");
     },
