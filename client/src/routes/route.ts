@@ -8,20 +8,30 @@ export const appRouter = createBrowserRouter([
       const { default: App } = await import("../App");
       return { Component: App };
     },
-    {
-        path: "login",
-        lazy: async () => {
-            const { Login } = await import("../app/public/login");
-            return { Component: Login };
-        },
-        ErrorBoundary: ErrorPage,
+    ErrorBoundary: ErrorPage,
+  },
+  {
+    path: "login",
+    lazy: async () => {
+      const { Login } = await import("../app/public/login");
+      return { Component: Login };
     },
-    {
-        path: "signup",
-        lazy: async () => {
-            const { SignUp } = await import("../app/public/signup");
-            return { Component: SignUp };
-        },
-        ErrorBoundary: ErrorPage,
+    ErrorBoundary: ErrorPage,
+  },
+  {
+    path: "signup",
+    lazy: async () => {
+      const { SignUp } = await import("../app/public/signup");
+      return { Component: SignUp };
     },
+    ErrorBoundary: ErrorPage,
+  },
+  {
+    path: "homepage",
+    lazy: async () => {
+      const { HomePage } = await import("../app/private/homepage");
+      return { Component: HomePage };
+    },
+    ErrorBoundary: ErrorPage,
+  },
 ]);
