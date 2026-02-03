@@ -9,10 +9,17 @@ import Redis from "ioredis";
       provide: "REDIS",
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        return new Redis({
+        const redis = new Redis({
           host: config.get<string>("REDIS_HOST") || "localhost",
           port: config.get<number>("REDIS_PORT") || 6379,
+          lazyConnect: true,
         });
+
+        redis.on("error", (err) => {
+          console.error("Redis connection error:", err.message);
+        });
+
+        return redis;
       },
     },
   ],

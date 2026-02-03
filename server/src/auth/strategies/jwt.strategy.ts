@@ -3,24 +3,21 @@ import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { PrismaService } from "src/prisma/prisma.service";
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
   ) {
-    const jwtSecret = config.get<string>("JWT_ACCESS_SECRET");
+    const jwtSecret = config.getOrThrow<string>("JWT_ACCESS_SECRET");
 
-    if (!jwtSecret) {
-      throw new Error(
-        "JWT_ACCESS_SECRET is not defined in environment variables",
-      );
-    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: jwtSecret,
     });
   }
+
   async validate(payload: { sub: string }) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -30,9 +27,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
       },
     });
+
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException("User not found");
     }
+
     return user;
   }
 }
