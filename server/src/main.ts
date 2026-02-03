@@ -6,7 +6,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { AuthModule } from "./auth/auth.module";
-import { PostModule } from "./posts/posts.module";
+import { PostsModule } from "./posts/posts.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
 import { SampleModule } from "./sample/sample.module";
 
@@ -41,7 +41,7 @@ async function bootstrap() {
     .build();
 
   const { document, tags } = setupSwagger(app, config, {
-    include: [SampleModule, AuthModule, PostModule],
+    include: [SampleModule, AuthModule, PostsModule],
   });
 
   SwaggerModule.setup("/docs", app, document, {
