@@ -48,17 +48,17 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const hash = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
     const otp = this.generateOtp();
-    const otpHash = await bcrypt.hash(otp, 10);
+    const hashedOtp = await bcrypt.hash(otp, 10);
 
     await this.prisma.user.create({
       data: {
         ...dto,
-        password: hash,
+        password: hashedPassword,
       },
     });
-    await this.redis.set(`email:otp:${dto.email}`, otpHash, "EX", 300);
+    await this.redis.set(`email:otp:${dto.email}`, hashedOtp, "EX", 300);
     await this.mail.sendOtpMail(dto.email, otp);
 
     return { message: "OTP is sent to email" };
@@ -172,9 +172,9 @@ export class AuthService {
       throw new ForbiddenException("Email is already activated");
     }
     const otp = this.generateOtp();
-    const otpHash = await bcrypt.hash(otp, 10);
+    const hashedOtp = await bcrypt.hash(otp, 10);
 
-    await this.redis.set(otpKey, otpHash, "EX", 300);
+    await this.redis.set(otpKey, hashedOtp, "EX", 300);
     await this.redis.set(resendKey, "1", "EX", 60);
     await this.mail.sendOtpMail(email, otp);
 
