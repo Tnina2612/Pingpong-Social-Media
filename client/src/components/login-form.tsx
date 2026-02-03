@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-import Univerese from "@/assets/universe.jpg";
+import SocialMedia from "@/assets/social_media.png";
 import { Spinner } from "./ui/spinner";
 import { useLogin } from "@/services/auth/login";
 import { useState } from "react";
@@ -37,8 +37,8 @@ export function LoginForm({
     >
       <Card
         className="overflow-hidden p-0 w-full max-w-4xl bg-slate-900/40
-       backdrop-blur-xl text-slate-100 border border-blue-800/30 
-       shadow-2xl shadow-blue-900/20 ring-1 ring-blue-400/40"
+       backdrop-blur-xl text-slate-100 border-blue-800/30 
+       shadow-2xl shadow-blue-900/20"
       >
         <CardContent className="grid p-0 md:grid-cols-2">
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
@@ -168,7 +168,7 @@ export function LoginForm({
           <div className="relative hidden md:block overflow-hidden">
             <div className="absolute inset-0 " />
             <img
-              src={Univerese}
+              src={SocialMedia}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover "
             />
