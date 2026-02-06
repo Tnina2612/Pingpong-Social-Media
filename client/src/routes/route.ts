@@ -22,7 +22,7 @@ export const appRouter = createBrowserRouter([
   {
     path: "login",
     lazy: async () => {
-      const { Login } = await import("../app/public/login");
+      const { Login } = await import("../app");
       return { Component: Login };
     },
     ErrorBoundary: ErrorPage,
@@ -30,8 +30,24 @@ export const appRouter = createBrowserRouter([
   {
     path: "signup",
     lazy: async () => {
-      const { SignUp } = await import("../app/public/signup");
+      const { SignUp } = await import("../app");
       return { Component: SignUp };
+    },
+    ErrorBoundary: ErrorPage,
+  },
+  {
+    path: "verify-otp",
+    lazy: async () => {
+      const { VerifyOtp } = await import("../app");
+      return { Component: VerifyOtp };
+    },
+    ErrorBoundary: ErrorPage,
+  },
+  {
+    path: "reset-password",
+    lazy: async () => {
+      const { ResetPassword } = await import("../app");
+      return { Component: ResetPassword };
     },
     ErrorBoundary: ErrorPage,
   },
@@ -41,7 +57,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "homepage",
         lazy: async () => {
-          const { HomePage } = await import("../app/private/homepage");
+          const { HomePage } = await import("../app");
           return { Component: HomePage };
         },
         ErrorBoundary: ErrorPage,

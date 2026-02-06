@@ -48,7 +48,7 @@ export function LoginForm({
                   Welcome back
                 </h1>
                 <p className="text-slate-400 text-balance">
-                  Login to your Acme Inc account
+                  Login to your Pingpong account
                 </p>
               </div>
               <Field>
