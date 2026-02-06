@@ -1,20 +1,21 @@
-import { apiClient } from "@/lib";
-import type { ResponseMessage } from "@/types/response";
 import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
+import { apiClient } from "@/lib";
+import type { ResponseMessage } from "@/types/response";
+
 interface RegisterProps {
   username: string;
   email: string;
   password: string;
 }
 export const useRegister = () => {
-  return useMutation({
-    mutationFn: async (data: RegisterProps) => {
-      const res = await apiClient.post("/register", data);
-      return res.data;
+  return useMutation<ResponseMessage, AxiosError, RegisterProps>({
+    mutationFn: async (data: RegisterProps): Promise<ResponseMessage> => {
+      const res = await apiClient.post("/auth/register", data);
+      return res.data as ResponseMessage;
     },
-    onSuccess: async (res) => {
+    onSuccess: async (res: ResponseMessage) => {
       toast.success(res.message);
     },
     onError: async (err: AxiosError) => {

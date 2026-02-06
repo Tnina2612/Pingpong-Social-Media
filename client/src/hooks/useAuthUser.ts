@@ -1,10 +1,12 @@
-import type { User } from "@/types";
 import { create } from "zustand";
+import type { User } from "@/types";
+
 type AuthUser = {
-  authUser: User | null;
-  access_token: string | null;
+  user: User | null;
+  accessToken: string | null;
 };
+
 export const useAuthUser = create<AuthUser>(() => ({
-  authUser: null,
-  access_token: null,
+  user: null,
+  accessToken: null,
 }));

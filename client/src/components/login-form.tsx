@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { LoginPoster } from "@/assets";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -9,11 +11,8 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-import Univerese from "@/assets/universe.jpg";
-import { Spinner } from "./ui/spinner";
 import { useLogin } from "@/services/auth/login";
-import { useState } from "react";
+import { Spinner } from "./ui/spinner";
 
 export function LoginForm({
   className,
@@ -27,6 +26,7 @@ export function LoginForm({
     event.preventDefault();
     login({ email, password });
   };
+
   return (
     <div
       className={cn(
@@ -36,7 +36,7 @@ export function LoginForm({
       {...props}
     >
       <Card
-        className="overflow-hidden p-0 w-full max-w-4xl bg-slate-900/40
+        className="overflow-hidden mt-8 mb-8 p-0 w-full max-w-4xl bg-slate-900/40
        backdrop-blur-xl text-slate-100 border border-blue-800/30 
        shadow-2xl shadow-blue-900/20 ring-1 ring-blue-400/40"
       >
@@ -97,7 +97,7 @@ export function LoginForm({
                   {isLoading ? (
                     <>
                       <Spinner className="size-5 text-white" />
-                      <span className=" text-white">Loading...</span>
+                      <span className="text-white">Loading...</span>
                     </>
                   ) : (
                     "Login"
@@ -166,9 +166,8 @@ export function LoginForm({
             </FieldGroup>
           </form>
           <div className="relative hidden md:block overflow-hidden">
-            <div className="absolute inset-0 " />
             <img
-              src={Univerese}
+              src={LoginPoster}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover "
             />

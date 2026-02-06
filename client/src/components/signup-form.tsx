@@ -1,3 +1,7 @@
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { RegisterPoster } from "@/assets";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -7,14 +11,10 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
-import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import Univerese from "@/assets/universe.jpg";
-import { Spinner } from "./ui/spinner";
 import { cn } from "@/lib/utils";
 import { useRegister } from "@/services/auth/register";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { Spinner } from "./ui/spinner";
 
 export function SignupForm({
   className,
@@ -34,6 +34,7 @@ export function SignupForm({
     }
     register({ username, email, password });
   };
+
   return (
     <div
       className={cn(
@@ -43,7 +44,7 @@ export function SignupForm({
       {...props}
     >
       <Card
-        className="overflow-hidden p-0 w-full max-w-4xl bg-slate-900/40
+        className="overflow-hidden mt-8 mb-8 p-0 w-full max-w-4xl bg-slate-900/40
        backdrop-blur-xl text-slate-100 border border-blue-800/30 
        shadow-2xl shadow-blue-900/20 ring-1 ring-blue-400/40"
       >
@@ -122,7 +123,7 @@ export function SignupForm({
                   {isLoading ? (
                     <>
                       <Spinner className="size-5 text-white" />
-                      <span className=" text-white">Loading...</span>
+                      <span className="text-white">Loading...</span>
                     </>
                   ) : (
                     "Sign up"
@@ -192,7 +193,7 @@ export function SignupForm({
           </form>
           <div className="bg-muted relative hidden md:block">
             <img
-              src={Univerese}
+              src={RegisterPoster}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />
