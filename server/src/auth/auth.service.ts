@@ -8,6 +8,7 @@ import Redis from "ioredis";
 import { MailService } from "src/mail/mail.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { LoginDto, RegisterDto, VerifyOtpDto } from "./dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @Injectable()
 export class AuthService {
@@ -74,8 +75,17 @@ export class AuthService {
       throw new ForbiddenException("Invalid credentials");
     }
     const match = await bcrypt.compare(dto.password, user.password);
-    if (!match) throw new ForbiddenException("Invalid credentials");
-    return this.signToken(user.id);
+    if (!match) throw new ForbiddenException("Password is incorrect");
+    const tokens = await this.signToken(user.id);
+    return {
+      user: {
+        id: user?.id,
+        username: user.username,
+        avatar: user?.avatar,
+      },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
   async refreshToken(refreshToken: string, res: Response) {
@@ -179,5 +189,45 @@ export class AuthService {
     await this.mail.sendOtpMail(email, otp);
 
     return { message: "OTP resent successfully" };
+  }
+  async requestResetPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new ForbiddenException("User not found");
+    }
+    const otp = this.generateOtp();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    await this.redis.set(`reset:otp:${email}`, hashedOtp, "EX", 300);
+    await this.mail.sendOtpMail(email, otp);
+    return { message: "Reset-password OTP is sent to email" };
+  }
+  async resetPassword(dto: ResetPasswordDto) {
+    const otpKey = `reset:otp:${dto.email}`;
+    const attemptKey = `reset:attempt:${dto.email}`;
+
+    const attempts = await this.redis.incr(attemptKey);
+    if (attempts === 1) {
+      await this.redis.expire(attemptKey, 300);
+    }
+    if (attempts > 5) {
+      throw new ForbiddenException("Too many attempts. Please try again later");
+    }
+    const storedOtp = await this.redis.get(otpKey);
+    if (!storedOtp) {
+      throw new ForbiddenException("OTP expired or invalid");
+    }
+    const isValid = await bcrypt.compare(dto.otp, storedOtp);
+    if (!isValid) {
+      throw new ForbiddenException("Invalid OTP");
+    }
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { email: dto.email },
+      data: { password: hashedPassword, refreshToken: null },
+    });
+
+    return { message: "Password reset successfully" };
   }
 }

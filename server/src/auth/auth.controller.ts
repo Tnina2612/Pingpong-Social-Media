@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
@@ -7,6 +16,7 @@ import { GetUser } from "./decorators/get-user.decorator";
 import { LoginDto, RegisterDto, VerifyOtpDto } from "./dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshGuard } from "./guards/refresh.guard";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 
 @ApiTags("auth")
 @Controller("auth")
@@ -56,15 +66,17 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = await this.authService.login(dto);
-    res.cookie("refreshToken", tokens.refreshToken, {
+    const { user, accessToken, refreshToken } =
+      await this.authService.login(dto);
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: this.config.get<string>("NODE_ENV") === "production",
       sameSite: "strict",
       path: "/auth/refresh",
     });
     return {
-      accessToken: tokens.accessToken,
+      user,
+      accessToken,
     };
   }
 
@@ -151,5 +163,41 @@ export class AuthController {
   @Post("resend-otp")
   resendOtp(@Body("email") email: string) {
     return this.authService.resendOtp(email);
+  }
+  //POST /api/auth/request-reset-password
+  @ApiOperation({
+    summary: "Request reset password",
+    description: "Send verification OTP to email",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "OTP is sent successfully",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Invalid email or user not found",
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post("request-reset")
+  requestReset(@Body("email") email: string) {
+    return this.authService.requestResetPassword(email);
+  }
+  // POST /api/auth/reset-password
+  @ApiOperation({
+    summary: "Reset Password",
+    description: "Reset password for specified email address",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Reset password successfully",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Invalid email or user not found",
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post("reset-password")
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 }
