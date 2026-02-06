@@ -28,6 +28,10 @@ export function SignupForm({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
     if (password !== confirmPassword) {
       toast.error("Password does not match");
       return;

@@ -1,5 +1,14 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, redirect } from "react-router-dom";
+import { useAuthUser } from "@/hooks";
 import { ErrorPage } from "../errors/error-page";
+
+const authLoader = () => {
+  const { accessToken } = useAuthUser.getState();
+  if (!accessToken) {
+    return redirect("/login");
+  }
+  return null;
+};
 
 export const appRouter = createBrowserRouter([
   {
@@ -27,11 +36,16 @@ export const appRouter = createBrowserRouter([
     ErrorBoundary: ErrorPage,
   },
   {
-    path: "homepage",
-    lazy: async () => {
-      const { HomePage } = await import("../app/private/homepage");
-      return { Component: HomePage };
-    },
-    ErrorBoundary: ErrorPage,
+    loader: authLoader,
+    children: [
+      {
+        path: "homepage",
+        lazy: async () => {
+          const { HomePage } = await import("../app/private/homepage");
+          return { Component: HomePage };
+        },
+        ErrorBoundary: ErrorPage,
+      },
+    ],
   },
 ]);
