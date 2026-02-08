@@ -41,4 +41,30 @@ export class MailService {
       `,
     });
   }
+
+  async sendResetPasswordOtpMail(email: string, otp: string) {
+    await this.transporter.sendMail({
+      to: email,
+      subject: "Your password-reset OTP",
+      html: `
+        <div style="max-width:420px;margin:auto;padding:24px;
+        font-family:Arial;border-radius:12px;background:#fff">
+          <h2 style="text-align:center">Password-reset Request</h2>
+          <p style="text-align:center">Your OTP code</p>
+          <div style="
+            font-size:32px;
+            letter-spacing:6px;
+            text-align:center;
+            font-weight:bold;
+            margin:20px 0;
+          ">
+            ${otp}
+          </div>
+          <p style="text-align:center;color:#777">
+            Expires in 5 minutes
+          </p>
+        </div>
+      `,
+    });
+  }
 }

@@ -7,7 +7,7 @@ export class RegisterDto {
     example: "john.doe@example.com",
     type: String,
   })
-  @IsEmail()
+  @IsEmail({}, { message: "Invalid email format" })
   @IsNotEmpty({ message: "Email cannot be empty" })
   email: string;
 
@@ -26,6 +26,7 @@ export class RegisterDto {
     minLength: 8,
     type: String,
   })
+  @IsString()
   @MinLength(8)
   @IsNotEmpty({ message: "Password cannot be empty" })
   password: string;

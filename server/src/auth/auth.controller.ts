@@ -1,10 +1,25 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { GetUser } from "./decorators/get-user.decorator";
-import { LoginDto, RegisterDto, VerifyOtpDto } from "./dto";
+import {
+  EmailDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  VerifyOtpDto,
+} from "./dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshGuard } from "./guards/refresh.guard";
 
@@ -20,15 +35,15 @@ export class AuthController {
   @ApiOperation({
     summary: "Register a new user",
     description:
-      "Creates a new user account and sends verification OTP to email",
+      "Creates a new user account and sends verification OTP to email. Returns generic error if registration fails to prevent user enumeration.",
   })
   @ApiResponse({
     status: 201,
     description: "User registered successfully, OTP sent to email",
   })
   @ApiResponse({
-    status: 400,
-    description: "Invalid input or user already exists",
+    status: 403,
+    description: "Registration failed - check your details",
   })
   @HttpCode(HttpStatus.CREATED)
   @Post("register")
@@ -40,11 +55,11 @@ export class AuthController {
   @ApiOperation({
     summary: "Login user",
     description:
-      "Authenticates user and returns access token with refresh token in cookie",
+      "Authenticates user and returns access token, user payload with refresh token in cookie",
   })
   @ApiResponse({
     status: 200,
-    description: "Login successful, tokens generated",
+    description: "Login successful, tokens generated and user payload returned",
   })
   @ApiResponse({
     status: 401,
@@ -56,15 +71,17 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = await this.authService.login(dto);
-    res.cookie("refreshToken", tokens.refreshToken, {
+    const { user, accessToken, refreshToken } =
+      await this.authService.login(dto);
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: this.config.get<string>("NODE_ENV") === "production",
       sameSite: "strict",
       path: "/auth/refresh",
     });
     return {
-      accessToken: tokens.accessToken,
+      user,
+      accessToken,
     };
   }
 
@@ -137,19 +154,62 @@ export class AuthController {
   // POST /api/auth/resend-otp
   @ApiOperation({
     summary: "Resend OTP",
-    description: "Resends verification OTP to the specified email address",
+    description:
+      "Resends verification OTP to the specified email address. Returns generic success message regardless of user existence to prevent enumeration. Enforces 60-second cooldown.",
   })
   @ApiResponse({
     status: 200,
-    description: "OTP resent successfully",
+    description:
+      "Generic success response - OTP sent if email is registered and not activated",
   })
   @ApiResponse({
-    status: 400,
-    description: "Invalid email or user not found",
+    status: 403,
+    description: "Cooldown active - please wait before requesting another OTP",
   })
   @HttpCode(HttpStatus.OK)
   @Post("resend-otp")
-  resendOtp(@Body("email") email: string) {
-    return this.authService.resendOtp(email);
+  resendOtp(@Body() dto: EmailDto) {
+    return this.authService.resendOtp(dto.email);
+  }
+
+  //POST /api/auth/request-reset-password
+  @ApiOperation({
+    summary: "Request password reset",
+    description:
+      "Sends password reset OTP to the specified email address. Returns generic success message regardless of user existence to prevent enumeration. Enforces 60-second cooldown.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Generic success response - OTP sent if email is registered",
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Cooldown active - please wait before requesting another OTP",
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post("request-reset-password")
+  requestReset(@Body() dto: EmailDto) {
+    return this.authService.requestResetPassword(dto.email);
+  }
+
+  // POST /api/auth/reset-password
+  @ApiOperation({
+    summary: "Reset Password",
+    description:
+      "Resets password using OTP verification. Requires valid OTP from request-reset-password endpoint. Rate limited to 5 attempts per 5 minutes.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Password reset successfully",
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      "Invalid or expired OTP, or too many attempts (max 5 per 5 minutes)",
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post("reset-password")
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 }
