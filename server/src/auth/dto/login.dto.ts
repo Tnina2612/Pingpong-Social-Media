@@ -7,7 +7,7 @@ export class LoginDto {
     example: "john_doe@example.com",
     type: String,
   })
-  @IsEmail()
+  @IsEmail({}, { message: "Invalid email format" })
   @IsNotEmpty({ message: "Email cannot be empty" })
   email: string;
 
