@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
+import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 import { useAuthUser } from "@/hooks";
 import { useResetPassword } from "@/services/auth";
-import toast from "react-hot-toast";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
 import { Spinner } from "./ui/spinner";
-import { Link } from "react-router-dom";
 
 export function ResetPasswordForm() {
   const [otp, setOtp] = useState("");
@@ -94,7 +94,7 @@ export function ResetPasswordForm() {
                 Confirm password
               </label>
               <input
-                type="confirm-password"
+                type="password"
                 name="confirm-password"
                 id="confirm-password"
                 placeholder="••••••••"

@@ -1,4 +1,5 @@
 import { RefreshCwIcon } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +15,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useState } from "react";
 import { useAuthUser } from "@/hooks";
 import { useResendOtp, useVerifyOtp } from "@/services/auth";
 import { Spinner } from "./ui/spinner";
@@ -39,7 +39,10 @@ export function InputOTPForm() {
           <CardTitle>Verify your login</CardTitle>
           <CardDescription>
             Enter the verification code we sent to your email address:{" "}
-            <span className="font-medium">m@example.com</span>.
+            <span className="font-medium">
+              {temporaryEmail || "m@example.com"}
+            </span>
+            .
           </CardDescription>
         </CardHeader>
         <CardContent>

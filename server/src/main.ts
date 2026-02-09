@@ -19,10 +19,11 @@ export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   app.setGlobalPrefix("api");
   app.enableCors({
-    origin: "http://localhost:5173",
+    origin: configService.get("CLIENT_URL")?.split(","),
     credentials: true,
   });
   app.useGlobalPipes(
@@ -35,7 +36,6 @@ async function bootstrap() {
   app.useGlobalFilters(new PrismaExceptionFilter());
   app.use(cookieParser());
 
-  const configService = app.get(ConfigService);
   const apiEndpoint = configService.get("SERVER_URL");
   const config = new DocumentBuilder()
     .addServer(apiEndpoint)
