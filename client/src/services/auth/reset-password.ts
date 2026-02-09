@@ -4,6 +4,7 @@ import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import type { ResponseMessage } from "@/types/response";
 import { useNavigate } from "react-router-dom";
+import { useAuthUser } from "@/hooks";
 interface RequestResetProps {
   email: string;
 }
@@ -19,7 +20,8 @@ export const useRequestReset = () => {
       const res = await apiClient.post("/auth/request-reset", data);
       return res.data;
     },
-    onSuccess: async (res) => {
+    onSuccess: async (res, variables) => {
+      useAuthUser.setState({ temporaryEmail: variables.email });
       toast.success(res.message);
       navigate("/reset-password");
     },

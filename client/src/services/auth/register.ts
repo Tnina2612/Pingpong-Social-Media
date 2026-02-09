@@ -29,8 +29,9 @@ export const useRegister = () => {
       navigate("/verify-otp");
     },
     onError: async (err: AxiosError) => {
-      const data = err.response?.data as ResponseMessage;
-      toast.error(data.message);
+      const errorMessage =
+        (err.response?.data as ResponseMessage)?.message || err.message;
+      toast.error(errorMessage);
     },
   });
 };
@@ -47,8 +48,9 @@ export const useVerifyOtp = () => {
       navigate("/login");
     },
     onError: async (err: AxiosError) => {
-      const data = err.response?.data as ResponseMessage;
-      toast.error(data.message);
+      const errorMessage =
+        (err.response?.data as ResponseMessage)?.message || err.message;
+      toast.error(errorMessage);
     },
   });
 };
@@ -63,8 +65,9 @@ export const useResendOtp = () => {
       toast.success(res.message);
     },
     onError: async (err: AxiosError) => {
-      const data = err.response?.data as ResponseMessage;
-      toast.error(data.message);
+      const errorMessage =
+        (err.response?.data as ResponseMessage)?.message || err.message;
+      toast.error(errorMessage);
     },
   });
 };
