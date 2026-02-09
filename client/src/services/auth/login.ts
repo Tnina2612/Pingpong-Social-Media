@@ -23,23 +23,44 @@ interface LoginResponse {
 
 export const useLogin = () => {
   const navigate = useNavigate();
-  return useMutation({
-    mutationFn: async (data: LoginProps): Promise<LoginResponse> => {
+
+  return useMutation<LoginResponse, AxiosError, LoginProps>({
+    mutationFn: async (data: LoginProps) => {
       const res = await apiClient.post("/auth/login", data);
       return res.data;
     },
-    onSuccess: async (res: LoginResponse) => {
+
+    onSuccess: async (res) => {
       const { accessToken, user } = res;
+
       useAuthUser.setState({
         user: user as User,
         accessToken,
       });
+
       toast.success("Login successfully");
       navigate("/homepage");
     },
-    onError: async (err: AxiosError) => {
+
+    onError: async (err, variables) => {
       const data = err.response?.data as ResponseMessage;
-      toast.error(data.message);
+
+      if (
+        err.response?.status === 403 &&
+        data?.message ===
+          "Email is not activated, please fill otp sent to your email"
+      ) {
+        useAuthUser.setState({
+          temporaryEmail: variables.email,
+        });
+        navigate("/verify-otp");
+        return;
+      }
+
+      const errorMessage =
+        data?.message || err.message || "Login failed. Please try again.";
+
+      toast.error(errorMessage);
     },
   });
 };

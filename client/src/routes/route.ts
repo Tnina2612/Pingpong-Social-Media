@@ -22,7 +22,7 @@ export const appRouter = createBrowserRouter([
   {
     path: "login",
     lazy: async () => {
-      const { Login } = await import("../app");
+      const { Login } = await import("../app/public/login");
       return { Component: Login };
     },
     ErrorBoundary: ErrorPage,
@@ -30,7 +30,7 @@ export const appRouter = createBrowserRouter([
   {
     path: "signup",
     lazy: async () => {
-      const { SignUp } = await import("../app");
+      const { SignUp } = await import("../app/public/signup");
       return { Component: SignUp };
     },
     ErrorBoundary: ErrorPage,
@@ -38,7 +38,7 @@ export const appRouter = createBrowserRouter([
   {
     path: "verify-otp",
     lazy: async () => {
-      const { VerifyOtp } = await import("../app");
+      const { VerifyOtp } = await import("../app/private/verify-otp");
       return { Component: VerifyOtp };
     },
     ErrorBoundary: ErrorPage,
@@ -46,7 +46,7 @@ export const appRouter = createBrowserRouter([
   {
     path: "reset-password",
     lazy: async () => {
-      const { ResetPassword } = await import("../app");
+      const { ResetPassword } = await import("../app/private/reset-password");
       return { Component: ResetPassword };
     },
     ErrorBoundary: ErrorPage,
@@ -57,7 +57,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "homepage",
         lazy: async () => {
-          const { HomePage } = await import("../app");
+          const { HomePage } = await import("../app/private/homepage");
           return { Component: HomePage };
         },
         ErrorBoundary: ErrorPage,

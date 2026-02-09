@@ -71,11 +71,17 @@ export class AuthService {
         email: dto.email,
       },
     });
-    if (!user || !user.isActivated) {
+    if (!user) {
       throw new ForbiddenException("Invalid credentials");
     }
     const match = await bcrypt.compare(dto.password, user.password);
     if (!match) throw new ForbiddenException("Password is incorrect");
+    if (!user.isActivated) {
+      await this.resendOtp(dto.email);
+      throw new ForbiddenException(
+        "Email is not activated, please fill otp sent to your email",
+      );
+    }
     const tokens = await this.signToken(user.id);
     return {
       user: {
@@ -190,6 +196,7 @@ export class AuthService {
 
     return { message: "OTP resent successfully" };
   }
+
   async requestResetPassword(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -203,6 +210,7 @@ export class AuthService {
     await this.mail.sendOtpMail(email, otp);
     return { message: "Reset-password OTP is sent to email" };
   }
+
   async resetPassword(dto: ResetPasswordDto) {
     const otpKey = `reset:otp:${dto.email}`;
     const attemptKey = `reset:attempt:${dto.email}`;
