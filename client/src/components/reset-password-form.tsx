@@ -18,12 +18,19 @@ export function ResetPasswordForm() {
       return;
     }
     if (password !== confirmPassword) {
-      toast.error("Password do not match");
+      toast.error("Password does not match");
       return;
     }
     // Store password temporarily and navigate to OTP verification
     useAuthUser.getState().setTemporaryPassword(password);
-    requestReset({ email });
+    requestReset(
+      { email },
+      {
+        onError: () => {
+          useAuthUser.getState().clearTemporaryCredentials();
+        },
+      },
+    );
   };
 
   return (

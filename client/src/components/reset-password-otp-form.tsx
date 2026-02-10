@@ -1,5 +1,6 @@
 import { RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -89,14 +90,14 @@ export function ResetPasswordOTPForm() {
               </InputOTPGroup>
             </InputOTP>
             <FieldDescription>
-              <a href="#">I no longer have access to this email address.</a>
+              <Link to="#">I no longer have access to this email address.</Link>
             </FieldDescription>
           </Field>
         </CardContent>
         <CardFooter>
           <Field>
             <Button
-              type="submit"
+              type="button"
               className="cursor-pointer w-full"
               onClick={handleVerify}
               disabled={otp.length !== 6 || isResetting}
@@ -112,12 +113,12 @@ export function ResetPasswordOTPForm() {
             </Button>
             <div className="text-muted-foreground text-sm">
               Having trouble resetting your password?{" "}
-              <a
-                href="#"
+              <Link
+                to="#"
                 className="cursor-pointer hover:text-primary underline underline-offset-4 transition-colors"
               >
                 Contact support
-              </a>
+              </Link>
             </div>
           </Field>
         </CardFooter>

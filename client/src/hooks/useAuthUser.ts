@@ -42,6 +42,11 @@ export const useAuthUser = create<AuthUser>()(
     }),
     {
       name: "auth-storage", // localStorage key
+      partialize: (state) =>
+        ({
+          user: state.user,
+          accessToken: state.accessToken,
+        }) as AuthUser,
     },
   ),
 );
