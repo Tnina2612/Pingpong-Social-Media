@@ -11,6 +11,7 @@ interface RegisterProps {
   email: string;
   password: string;
 }
+
 interface VerifyOtpProps {
   email: string;
   otp: string;
@@ -25,7 +26,7 @@ export const useRegister = () => {
     },
     onSuccess: async (res: ResponseMessage, variables) => {
       toast.success(res.message);
-      useAuthUser.setState({ temporaryEmail: variables.email });
+      useAuthUser.getState().setTemporaryEmail(variables.email);
       navigate("/verify-otp");
     },
     onError: async (err: AxiosError) => {
@@ -45,6 +46,7 @@ export const useVerifyOtp = () => {
     },
     onSuccess: async (res: ResponseMessage) => {
       toast.success(res.message);
+      useAuthUser.getState().clearTemporaryCredentials();
       navigate("/login");
     },
     onError: async (err: AxiosError) => {
@@ -54,6 +56,7 @@ export const useVerifyOtp = () => {
     },
   });
 };
+
 export const useResendOtp = () => {
   const email = useAuthUser.getState().temporaryEmail;
   return useMutation({

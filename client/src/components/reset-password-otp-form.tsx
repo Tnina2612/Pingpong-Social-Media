@@ -16,30 +16,37 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { useAuthUser } from "@/hooks";
-import { useResendOtp, useVerifyOtp } from "@/services/auth";
+import { useRequestReset, useResetPassword } from "@/services/auth";
 import { Spinner } from "./ui/spinner";
 
-export function InputOTPForm() {
+export function ResetPasswordOTPForm() {
   const [otp, setOtp] = useState("");
-  const { temporaryEmail } = useAuthUser();
-  const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
-  const { mutate: resendOtp, isPending: isResending } = useResendOtp();
+  const { temporaryEmail, temporaryPassword } = useAuthUser();
+  const { mutate: resetPassword, isPending: isResetting } = useResetPassword();
+  const { mutate: resendOtp, isPending: isResending } = useRequestReset();
 
   const handleVerify = () => {
-    if (otp.length === 6 && temporaryEmail) {
-      verifyOtp({ email: temporaryEmail, otp });
+    if (otp.length === 6 && temporaryEmail && temporaryPassword) {
+      resetPassword({
+        email: temporaryEmail,
+        newPassword: temporaryPassword,
+        otp,
+      });
     }
   };
 
   const handleResend = () => {
-    resendOtp();
+    if (temporaryEmail) {
+      resendOtp({ email: temporaryEmail });
+      setOtp(""); // Clear OTP input
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <Card className="max-w-md">
         <CardHeader className="max-h-1/2">
-          <CardTitle>Verify your login</CardTitle>
+          <CardTitle>Verify Password Reset</CardTitle>
           <CardDescription>
             Enter the verification code we sent to your email address:{" "}
             <span className="font-medium">
@@ -82,9 +89,7 @@ export function InputOTPForm() {
               </InputOTPGroup>
             </InputOTP>
             <FieldDescription>
-              <a href="#" className="cursor-pointer">
-                I no longer have access to this email address.
-              </a>
+              <a href="#">I no longer have access to this email address.</a>
             </FieldDescription>
           </Field>
         </CardContent>
@@ -94,19 +99,19 @@ export function InputOTPForm() {
               type="submit"
               className="cursor-pointer w-full"
               onClick={handleVerify}
-              disabled={otp.length !== 6 || isVerifying}
+              disabled={otp.length !== 6 || isResetting}
             >
-              {isVerifying ? (
+              {isResetting ? (
                 <>
                   <Spinner className="size-5" />
-                  <span>Loading...</span>
+                  <span>Resetting Password...</span>
                 </>
               ) : (
-                "Verify"
+                "Reset Password"
               )}
             </Button>
             <div className="text-muted-foreground text-sm">
-              Having trouble signing in?{" "}
+              Having trouble resetting your password?{" "}
               <a
                 href="#"
                 className="cursor-pointer hover:text-primary underline underline-offset-4 transition-colors"

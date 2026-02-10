@@ -1,3 +1,4 @@
+export * from "../public/reset-password";
 export * from "./homepage";
-export * from "./reset-password";
+export * from "./reset-password-otp";
 export * from "./verify-otp";

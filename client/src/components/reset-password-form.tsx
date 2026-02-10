@@ -2,39 +2,28 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { useAuthUser } from "@/hooks";
-import { useResetPassword } from "@/services/auth";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
+import { useRequestReset } from "@/services/auth";
 import { Spinner } from "./ui/spinner";
 
 export function ResetPasswordForm() {
-  const [otp, setOtp] = useState("");
-  const email = useAuthUser.getState().temporaryEmail || "Johndoe@gmail.com";
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { mutate: resetPassword, isPending } = useResetPassword();
+  const { mutate: requestReset, isPending } = useRequestReset();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!password || !confirmPassword || !otp) {
+    if (!password || !confirmPassword) {
       toast.error("Please fill in all fields");
       return;
     }
-
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error("Password do not match");
       return;
     }
-
-    if (otp.length !== 6) {
-      toast.error("OTP must be 6 digits");
-      return;
-    }
-
-    resetPassword({
-      email,
-      newPassword: password,
-      otp,
-    });
+    // Store password temporarily and navigate to OTP verification
+    useAuthUser.getState().setTemporaryPassword(password);
+    requestReset({ email });
   };
 
   return (
@@ -63,9 +52,10 @@ export function ResetPasswordForm() {
                 name="email"
                 id="email"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder={email}
-                required={true}
-                disabled={true}
+                placeholder="you@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
@@ -104,49 +94,18 @@ export function ResetPasswordForm() {
                 required={true}
               />
             </div>
-            <div>
-              <label
-                htmlFor="otp"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >
-                Verify Otp
-              </label>
-              <InputOTP
-                maxLength={6}
-                id="otp-verification"
-                value={otp}
-                onChange={setOtp}
-                required
-              >
-                <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-12 *:data-[slot=input-otp-slot]:w-16 *:data-[slot=input-otp-slot]:text-xl">
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
             <button
               type="submit"
-              disabled={isPending}
-              className="w-full mb-2 text-white bg-primary flex items-center justify-center gap-2 hover:bg-primary/90 focus:ring-4
+              className="cursor-pointer w-full mb-2 text-white bg-primary flex items-center justify-center gap-2 hover:bg-primary/90 focus:ring-4
                focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600
-                dark:hover:bg-primary-700 dark:focus:ring-primary-800 disabled:opacity-60  disabled:cursor-not-allowed  disabled:hover:bg-primary"
+                dark:hover:bg-primary-700 dark:focus:ring-primary-800"
             >
-              {isPending ? (
-                <>
-                  <Spinner className="size-5" />
-                  <span>Loading...</span>
-                </>
-              ) : (
-                "Reset Password"
-              )}
+              {isPending && <Spinner className="size-5" />}
+              {isPending ? "Sending OTP..." : "Continue to OTP Verification"}
             </button>
             <div className="text-sm w-full text-center">
               <Link
-                className="font-medium text-primary-600 hover:underline dark:text-primary-500"
+                className="cursor-pointer font-medium text-primary-600 hover:underline dark:text-primary-500"
                 to="/login"
               >
                 Return to login

@@ -9,22 +9,24 @@ import type { ResponseMessage } from "@/types/response";
 interface RequestResetProps {
   email: string;
 }
+
 interface ResetPasswordProps {
   email: string;
   newPassword: string;
   otp: string;
 }
+
 export const useRequestReset = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: async (data: RequestResetProps) => {
-      const res = await apiClient.post("/auth/request-reset", data);
+      const res = await apiClient.post("/auth/request-reset-password", data);
       return res.data;
     },
     onSuccess: async (res, variables) => {
-      useAuthUser.setState({ temporaryEmail: variables.email });
+      useAuthUser.getState().setTemporaryEmail(variables.email);
       toast.success(res.message);
-      navigate("/reset-password");
+      navigate("/reset-password-otp");
     },
     onError: async (err: AxiosError) => {
       const errorMessage =
@@ -43,6 +45,7 @@ export const useResetPassword = () => {
     },
     onSuccess: async (res) => {
       toast.success(res.message);
+      useAuthUser.getState().clearTemporaryCredentials();
       navigate("/login");
     },
     onError: async (err: AxiosError) => {

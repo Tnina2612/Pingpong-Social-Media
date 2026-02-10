@@ -77,7 +77,7 @@ export function SignupForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -120,7 +120,7 @@ export function SignupForm({
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-linear-to-r from-blue-600 to-indigo-600
+                  className="cursor-pointer w-full bg-linear-to-r from-blue-600 to-indigo-600
                    hover:from-blue-500 hover:to-indigo-500 text-white font-medium 
                    shadow-lg shadow-blue-900/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
@@ -140,7 +140,7 @@ export function SignupForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -153,7 +153,7 @@ export function SignupForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -166,7 +166,7 @@ export function SignupForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path

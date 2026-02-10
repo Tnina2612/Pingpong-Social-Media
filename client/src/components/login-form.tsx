@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LoginPoster } from "@/assets";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,15 +13,14 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useLogin } from "@/services/auth/login";
 import { Spinner } from "./ui/spinner";
-import { useRequestReset } from "@/services/auth";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showForgot, setShowForgot] = useState(false);
   const { mutate: login, isPending: isLoading } = useLogin();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -60,7 +59,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -74,8 +73,8 @@ export function LoginForm({
                   </FieldLabel>
                   <button
                     type="button"
-                    onClick={() => setShowForgot(true)}
-                    className="ml-auto text-sm text-blue-400 hover:text-blue-300 underline-offset-2 hover:underline transition-colors"
+                    onClick={() => navigate("/reset-password")}
+                    className="cursor-pointer ml-auto text-sm text-blue-400 hover:text-blue-300 underline-offset-2 hover:underline transition-colors"
                   >
                     Forgot your password?
                   </button>
@@ -93,7 +92,7 @@ export function LoginForm({
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-linear-to-r from-blue-600 to-indigo-600
+                  className="cursor-pointer w-full bg-linear-to-r from-blue-600 to-indigo-600
                    hover:from-blue-500 hover:to-indigo-500 text-white font-medium 
                    shadow-lg shadow-blue-900/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
@@ -113,7 +112,7 @@ export function LoginForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -126,7 +125,7 @@ export function LoginForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -139,7 +138,7 @@ export function LoginForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -178,81 +177,6 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
-      {showForgot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Overlay */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowForgot(false)}
-          />
-
-          {/* Modal */}
-          <ForgotPasswordModal onClose={() => setShowForgot(false)} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
-  const [email, setEmail] = useState("");
-  const { mutate: requestReset, isPending } = useRequestReset();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    requestReset(
-      { email },
-      {
-        onSuccess: () => {
-          onClose(); // đóng modal sau khi gửi mail
-        },
-      },
-    );
-  };
-
-  return (
-    <div
-      className="relative z-10 w-full max-w-md rounded-xl bg-slate-900 border border-blue-700/40
-      shadow-2xl shadow-blue-900/40 p-6 text-slate-100"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h2 className="text-xl font-semibold text-center mb-2">
-        Reset your password
-      </h2>
-      <p className="text-sm text-slate-400 text-center mb-6">
-        Enter your email and we’ll send you a reset code
-      </p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          type="email"
-          placeholder="you@example.com"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="bg-slate-800/50 border-blue-700/30 text-slate-100"
-        />
-
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="w-full flex items-center justify-center gap-2
-          bg-linear-to-r from-blue-600 to-indigo-600
-          hover:from-blue-500 hover:to-indigo-500"
-        >
-          {isPending && <Spinner className="size-5" />}
-          {isPending ? "Sending..." : "Send reset email"}
-        </Button>
-
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onClose}
-          className="w-full text-slate-400 hover:text-slate-200 hover:bg-gray-700"
-        >
-          Cancel
-        </Button>
-      </form>
     </div>
   );
 }
