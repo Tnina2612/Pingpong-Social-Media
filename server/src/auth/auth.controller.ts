@@ -62,7 +62,7 @@ export class AuthController {
     description: "Login successful, tokens generated and user payload returned",
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: "Invalid credentials",
   })
   @HttpCode(HttpStatus.OK)
@@ -77,7 +77,7 @@ export class AuthController {
       httpOnly: true,
       secure: this.config.get<string>("NODE_ENV") === "production",
       sameSite: "strict",
-      path: "/auth/refresh",
+      path: "/api/auth/refresh",
     });
     return {
       user,
@@ -95,7 +95,7 @@ export class AuthController {
     description: "Token refreshed successfully",
   })
   @ApiResponse({
-    status: 401,
+    status: 403,
     description: "Invalid or expired refresh token",
   })
   @HttpCode(HttpStatus.OK)

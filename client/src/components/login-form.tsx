@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { LoginPoster } from "@/assets";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -9,16 +11,14 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-import Univerese from "@/assets/universe.jpg";
-import { Spinner } from "./ui/spinner";
 import { useLogin } from "@/services/auth/login";
-import { useState } from "react";
+import { Spinner } from "./ui/spinner";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { mutate: login, isPending: isLoading } = useLogin();
@@ -27,6 +27,7 @@ export function LoginForm({
     event.preventDefault();
     login({ email, password });
   };
+
   return (
     <div
       className={cn(
@@ -36,7 +37,7 @@ export function LoginForm({
       {...props}
     >
       <Card
-        className="overflow-hidden p-0 w-full max-w-4xl bg-slate-900/40
+        className="overflow-hidden mt-8 mb-8 p-0 w-full max-w-4xl bg-slate-900/40
        backdrop-blur-xl text-slate-100 border border-blue-800/30 
        shadow-2xl shadow-blue-900/20 ring-1 ring-blue-400/40"
       >
@@ -48,7 +49,7 @@ export function LoginForm({
                   Welcome back
                 </h1>
                 <p className="text-slate-400 text-balance">
-                  Login to your Acme Inc account
+                  Login to your Pingpong account
                 </p>
               </div>
               <Field>
@@ -58,7 +59,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -70,12 +71,13 @@ export function LoginForm({
                   <FieldLabel htmlFor="password" className="text-slate-300">
                     Password
                   </FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm text-blue-400 hover:text-blue-300 underline-offset-2 hover:underline transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => navigate("/reset-password")}
+                    className="cursor-pointer ml-auto text-sm text-blue-400 hover:text-blue-300 underline-offset-2 hover:underline transition-colors"
                   >
                     Forgot your password?
-                  </a>
+                  </button>
                 </div>
                 <Input
                   id="password"
@@ -90,14 +92,14 @@ export function LoginForm({
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-linear-to-r from-blue-600 to-indigo-600
+                  className="cursor-pointer w-full bg-linear-to-r from-blue-600 to-indigo-600
                    hover:from-blue-500 hover:to-indigo-500 text-white font-medium 
                    shadow-lg shadow-blue-900/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
                       <Spinner className="size-5 text-white" />
-                      <span className=" text-white">Loading...</span>
+                      <span className="text-white">Loading...</span>
                     </>
                   ) : (
                     "Login"
@@ -110,7 +112,7 @@ export function LoginForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -123,7 +125,7 @@ export function LoginForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -136,7 +138,7 @@ export function LoginForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -166,9 +168,8 @@ export function LoginForm({
             </FieldGroup>
           </form>
           <div className="relative hidden md:block overflow-hidden">
-            <div className="absolute inset-0 " />
             <img
-              src={Univerese}
+              src={LoginPoster}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover "
             />

@@ -1,3 +1,7 @@
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { RegisterPoster } from "@/assets";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -7,14 +11,10 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
-import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import Univerese from "@/assets/universe.jpg";
-import { Spinner } from "./ui/spinner";
 import { cn } from "@/lib/utils";
 import { useRegister } from "@/services/auth/register";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { Spinner } from "./ui/spinner";
 
 export function SignupForm({
   className,
@@ -28,12 +28,17 @@ export function SignupForm({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
     if (password !== confirmPassword) {
       toast.error("Password does not match");
       return;
     }
     register({ username, email, password });
   };
+
   return (
     <div
       className={cn(
@@ -43,7 +48,7 @@ export function SignupForm({
       {...props}
     >
       <Card
-        className="overflow-hidden p-0 w-full max-w-4xl bg-slate-900/40
+        className="overflow-hidden mt-8 mb-8 p-0 w-full max-w-4xl bg-slate-900/40
        backdrop-blur-xl text-slate-100 border border-blue-800/30 
        shadow-2xl shadow-blue-900/20 ring-1 ring-blue-400/40"
       >
@@ -72,7 +77,7 @@ export function SignupForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -115,14 +120,14 @@ export function SignupForm({
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-linear-to-r from-blue-600 to-indigo-600
+                  className="cursor-pointer w-full bg-linear-to-r from-blue-600 to-indigo-600
                    hover:from-blue-500 hover:to-indigo-500 text-white font-medium 
                    shadow-lg shadow-blue-900/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
                       <Spinner className="size-5 text-white" />
-                      <span className=" text-white">Loading...</span>
+                      <span className="text-white">Loading...</span>
                     </>
                   ) : (
                     "Sign up"
@@ -135,7 +140,7 @@ export function SignupForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -148,7 +153,7 @@ export function SignupForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -161,7 +166,7 @@ export function SignupForm({
                 <Button
                   variant="outline"
                   type="button"
-                  className="bg-slate-800"
+                  className="cursor-pointer bg-slate-800"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -192,7 +197,7 @@ export function SignupForm({
           </form>
           <div className="bg-muted relative hidden md:block">
             <img
-              src={Univerese}
+              src={RegisterPoster}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />

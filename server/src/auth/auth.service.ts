@@ -80,8 +80,11 @@ export class AuthService {
         email: dto.email,
       },
     });
-    if (!user || !user.isActivated) {
+    if (!user) {
       throw new ForbiddenException("Invalid credentials");
+    }
+    if (!user.isActivated) {
+      throw new ForbiddenException("Email is not activated");
     }
 
     const match = await bcrypt.compare(dto.password, user.password);
@@ -125,7 +128,7 @@ export class AuthService {
       httpOnly: true,
       secure: this.config.get<string>("NODE_ENV") === "production",
       sameSite: "strict",
-      path: "/auth/refresh",
+      path: "/api/auth/refresh",
     });
 
     return {
@@ -139,7 +142,7 @@ export class AuthService {
       data: { refreshToken: null },
     });
     res.clearCookie("refreshToken", {
-      path: "/auth/refresh",
+      path: "/api/auth/refresh",
     });
     return { message: "Logged out" };
   }
