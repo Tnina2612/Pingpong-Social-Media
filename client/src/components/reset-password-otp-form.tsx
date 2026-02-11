@@ -44,7 +44,7 @@ export function ResetPasswordOTPForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center px-1">
       <Card className="max-w-md">
         <CardHeader className="max-h-1/2">
           <CardTitle>Verify Password Reset</CardTitle>
