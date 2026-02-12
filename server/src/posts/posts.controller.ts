@@ -11,9 +11,10 @@ import { CreatePostDto } from "./dto";
 import { PostsService } from "./posts.service";
 import { PostResponseDto } from "./response";
 
-@ApiTags("posts")
+@ApiTags("Posts")
 @ApiBearerAuth()
 @Controller("posts")
+@UseGuards(JwtAuthGuard)
 export class PostsController {
   constructor(private readonly postService: PostsService) {}
 
@@ -32,7 +33,6 @@ export class PostsController {
     status: 401,
     description: "Unauthorized - invalid or missing token",
   })
-  @UseGuards(JwtAuthGuard)
   @Get()
   async getFeed(@GetUser("id") id: string) {
     return this.postService.findAll(id);
@@ -56,7 +56,6 @@ export class PostsController {
     status: 401,
     description: "Unauthorized - invalid or missing token",
   })
-  @UseGuards(JwtAuthGuard)
   @Post()
   async createPost(@GetUser("id") id: string, @Body() dto: CreatePostDto) {
     return this.postService.create(id, dto);

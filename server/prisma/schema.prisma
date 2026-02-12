@@ -83,6 +83,7 @@ model Comment {
   replies    Comment[] @relation(name: "CommonReplies")
 
   content    String
+  mediaUrls  String[] @default([])
   likes      Like[]
 }
 

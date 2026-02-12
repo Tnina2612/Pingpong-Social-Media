@@ -40,31 +40,12 @@ export class PostsService {
     }));
   }
 
-  async create(userId: string, dto: CreatePostDto): Promise<PostResponseDto> {
-    const post = await this.prisma.post.create({
+  async create(userId: string, dto: CreatePostDto) {
+    return this.prisma.post.create({
       data: {
         ...dto,
         authorId: userId,
       },
-      include: {
-        author: true,
-      },
     });
-    return {
-      id: post.id,
-      content: post.content,
-      mediaUrls: post.mediaUrls,
-      createdAt: post.createdAt,
-      author: {
-        id: post.author.id,
-        username: post.author.username,
-        avatar: post.author.avatar,
-      },
-      isLiked: false,
-      stats: {
-        likeCount: 0,
-        commentCount: 0,
-      },
-    };
   }
 }
