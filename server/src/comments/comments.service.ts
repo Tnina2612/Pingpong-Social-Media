@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateCommentDto } from "./dto";
 import { CommentResponseDto } from "./response";
@@ -78,20 +78,25 @@ export class CommentsService {
   }
 
   async create(userId: string, dto: CreateCommentDto) {
+    // Ensure original post exists
+    if (dto.postId) {
+      const post = await this.prisma.post.findUnique({
+        where: { id: dto.postId },
+      });
+      if (!post) throw new NotFoundException("Original post not found");
+    }
+
     // If it's a reply, ensure parent exists
     if (dto.parentId) {
       const parent = await this.prisma.comment.findUnique({
         where: { id: dto.parentId },
       });
-      if (!parent) throw new Error("Parent comment not found");
+      if (!parent) throw new NotFoundException("Parent comment not found");
     }
 
     return this.prisma.comment.create({
       data: {
-        content: dto.content,
-        mediaUrls: dto.mediaUrls,
-        postId: dto.postId,
-        parentId: dto.parentId,
+        ...dto,
         authorId: userId,
       },
     });

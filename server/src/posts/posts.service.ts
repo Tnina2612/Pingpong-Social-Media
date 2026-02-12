@@ -46,9 +46,6 @@ export class PostsService {
         ...dto,
         authorId: userId,
       },
-      include: {
-        author: true,
-      },
     });
   }
 }

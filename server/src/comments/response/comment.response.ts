@@ -23,7 +23,7 @@ export class CommentStatsDto {
 export class CommentResponseDto {
   @ApiProperty({
     description: "Unique identifier of the comment",
-    example: "clx1y2z3a0000abcdef123456",
+    example: "550e8400-e29b-41d4-a716-446655440000",
     type: String,
   })
   @Expose()

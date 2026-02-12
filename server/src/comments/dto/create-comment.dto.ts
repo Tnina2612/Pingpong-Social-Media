@@ -11,7 +11,7 @@ import {
 export class CreateCommentDto {
   @ApiProperty({
     description: "ID of the post being commented on",
-    example: "clx1y2z3a0000abcdef123456",
+    example: "550e8400-e29b-41d4-a716-446655440000",
     type: String,
   })
   @IsUUID()
@@ -19,7 +19,7 @@ export class CreateCommentDto {
 
   @ApiProperty({
     description: "ID of parent comment if this is a reply",
-    example: "clx1y2z3a0000abcdef789012",
+    example: "550e8400-e29b-41d4-a716-446655440000",
     type: String,
     required: false,
   })

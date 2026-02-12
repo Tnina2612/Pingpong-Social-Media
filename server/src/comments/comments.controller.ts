@@ -48,6 +48,10 @@ export class CommentsController {
     status: 401,
     description: "Unauthorized - invalid or missing token",
   })
+  @ApiResponse({
+    status: 404,
+    description: "Not found - missing post or parent comment",
+  })
   @Post()
   create(@GetUser("id") userId: string, @Body() dto: CreateCommentDto) {
     return this.commentsService.create(userId, dto);
@@ -62,7 +66,7 @@ export class CommentsController {
   @ApiParam({
     name: "postId",
     description: "ID of the post",
-    example: "clx1y2z3a0000abcdef123456",
+    example: "550e8400-e29b-41d4-a716-446655440000",
   })
   @ApiQuery({
     name: "page",
@@ -97,7 +101,7 @@ export class CommentsController {
   @ApiParam({
     name: "commentId",
     description: "ID of the parent comment",
-    example: "clx1y2z3a0000abcdef123456",
+    example: "550e8400-e29b-41d4-a716-446655440000",
   })
   @ApiResponse({
     status: 200,
