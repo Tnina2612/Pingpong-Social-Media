@@ -23,7 +23,7 @@ import {
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshGuard } from "./guards/refresh.guard";
 
-@ApiTags("auth")
+@ApiTags("Authentication")
 @Controller("auth")
 export class AuthController {
   constructor(

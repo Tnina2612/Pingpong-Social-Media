@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Expose, Type } from "class-transformer";
-import { UserResponseDto } from "../../users/response/user.response";
+import { AuthorDto } from "src/users/dto";
 
 export class PostStatsDto {
   @ApiProperty({
@@ -23,7 +23,7 @@ export class PostStatsDto {
 export class PostResponseDto {
   @ApiProperty({
     description: "Unique identifier of the post",
-    example: "clx1y2z3a0000abcdef123456",
+    example: "550e8400-e29b-41d4-a716-446655440000",
     type: String,
   })
   @Expose()
@@ -55,11 +55,11 @@ export class PostResponseDto {
 
   @ApiProperty({
     description: "Author of the post",
-    type: () => UserResponseDto,
+    type: () => AuthorDto,
   })
   @Expose()
-  @Type(() => UserResponseDto)
-  author: UserResponseDto;
+  @Type(() => AuthorDto)
+  author: AuthorDto;
 
   @ApiProperty({
     description: "Whether the requesting user has liked this post",
