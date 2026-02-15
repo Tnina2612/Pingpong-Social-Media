@@ -8,4 +8,4 @@ import { LikesService } from "./likes.service";
   controllers: [LikesController],
   providers: [LikesService],
 })
-export class PostsModule {}
+export class LikesModule {}
