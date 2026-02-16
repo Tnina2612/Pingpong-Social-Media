@@ -60,4 +60,9 @@ export class PostsController {
   async createPost(@GetUser("id") id: string, @Body() dto: CreatePostDto) {
     return this.postService.create(id, dto);
   }
+
+  @Get("/:postId")
+  async findById(@GetUser("id") id: string, @Body() postId : string) {
+    return this.postService.findById(id, postId);
+  }
 }
