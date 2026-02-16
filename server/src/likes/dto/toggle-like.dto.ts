@@ -1,10 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { TargetLikeType } from "@prisma/client";
 import { IsEnum, IsNotEmpty, IsUUID } from "class-validator";
-
-export enum LikeTargetType {
-  POST = "POST",
-  COMMENT = "COMMENT",
-}
 
 export class ToggleLikeDto {
   @ApiProperty({
@@ -18,9 +14,9 @@ export class ToggleLikeDto {
 
   @ApiProperty({
     description: "Type of target being liked",
-    enum: LikeTargetType,
-    example: LikeTargetType.POST,
+    enum: TargetLikeType,
+    example: TargetLikeType.POST,
   })
-  @IsEnum(LikeTargetType)
-  type: LikeTargetType;
+  @IsEnum(TargetLikeType)
+  type: TargetLikeType;
 }

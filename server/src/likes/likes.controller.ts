@@ -17,7 +17,7 @@ import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ToggleLikeDto } from "./dto";
 import { LikesService } from "./likes.service";
 
-@ApiTags("likes")
+@ApiTags("Likes")
 @ApiBearerAuth()
 @Controller("likes")
 @UseGuards(JwtAuthGuard)

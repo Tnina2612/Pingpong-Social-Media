@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { TargetLikeType } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
-import { LikeTargetType, ToggleLikeDto } from "./dto";
+import { ToggleLikeDto } from "./dto";
 
 @Injectable()
 export class LikesService {
@@ -8,7 +9,7 @@ export class LikesService {
 
   async toggleLike(userId: string, dto: ToggleLikeDto) {
     const { targetId, type } = dto;
-    const isPost = type === LikeTargetType.POST;
+    const isPost = type === TargetLikeType.POST;
 
     // Ensure post or comment exists
     if (isPost) {
@@ -23,19 +24,8 @@ export class LikesService {
       if (!comment) throw new NotFoundException("Comment not found");
     }
 
-    // Prisma's compound unique key naming
-    const existingLike = await this.prisma.like.findUnique({
-      where: isPost
-        ? { postId_userId: { postId: targetId, userId } }
-        : { commentId_userId: { commentId: targetId, userId } },
-    });
-
-    if (existingLike) {
-      await this.prisma.like.delete({
-        where: { id: existingLike.id },
-      });
-      return { isLiked: false }; // Return new state to frontend
-    } else {
+    try {
+      // Try to create the "Like" first (Optimistic assumption: User wants to Like)
       await this.prisma.like.create({
         data: {
           userId,
@@ -44,7 +34,30 @@ export class LikesService {
           commentId: !isPost ? targetId : null,
         },
       });
+
       return { isLiked: true };
+    } catch (error) {
+      // Unique Constraint Violation
+      if (error.code === "P2002") {
+        try {
+          await this.prisma.like.delete({
+            // Prisma's compound unique key naming
+            where: isPost
+              ? { postId_userId: { postId: targetId, userId } }
+              : { commentId_userId: { commentId: targetId, userId } },
+          });
+          return { isLiked: false };
+        } catch (deleteError) {
+          // Edge case: If a concurrent request deleted it between our create-fail
+          // and this delete, it is effectively "unliked" already
+          if (deleteError.code === "P2025") {
+            return { isLiked: false };
+          }
+          throw deleteError;
+        }
+      }
+
+      throw error;
     }
   }
 }
