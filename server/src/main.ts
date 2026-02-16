@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { AuthModule } from "./auth/auth.module";
 import { CommentsModule } from "./comments/comments.module";
+import { LikesModule } from "./likes/likes.module";
 import { PostsModule } from "./posts/posts.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
 import { SampleModule } from "./sample/sample.module";
@@ -45,7 +46,13 @@ async function bootstrap() {
     .build();
 
   const { document, tags } = setupSwagger(app, config, {
-    include: [SampleModule, AuthModule, PostsModule, CommentsModule],
+    include: [
+      SampleModule,
+      AuthModule,
+      PostsModule,
+      CommentsModule,
+      LikesModule,
+    ],
   });
 
   SwaggerModule.setup("/docs", app, document, {
