@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
@@ -61,8 +62,30 @@ export class PostsController {
     return this.postService.create(id, dto);
   }
 
+  @ApiOperation({
+    summary: "Get post by ID",
+    description: "Retrieves a specific post by its unique identifier",
+  })
+  @ApiParam({
+    name: "postId",
+    description: "ID of the post",
+    example: "550e8400-e29b-41d4-a716-446655440000",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Post retrieved successfully",
+    type: PostResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Post not found",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized - invalid or missing token",
+  })
   @Get("/:postId")
-  async findById(@GetUser("id") id: string, @Body() postId : string) {
+  async findById(@GetUser("id") id: string, @Param("postId") postId: string) {
     return this.postService.findById(id, postId);
   }
 }
