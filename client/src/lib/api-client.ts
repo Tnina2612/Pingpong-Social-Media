@@ -10,7 +10,7 @@ apiClient.interceptors.request.use(
   (config) => {
     const accessToken = useAuthUser.getState().accessToken;
     if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+      config.headers.setAuthorization(`Bearer ${accessToken}`);
     }
     return config;
   },
@@ -19,11 +19,9 @@ apiClient.interceptors.request.use(
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
-
 function subscribeTokenRefresh(cb: (token: string) => void) {
   refreshSubscribers.push(cb);
 }
-
 function onRefreshed(token: string) {
   refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
@@ -50,7 +48,7 @@ apiClient.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          "/auth/refresh",
+          "http://localhost:3000/api/auth/refresh",
           {},
           { withCredentials: true },
         );

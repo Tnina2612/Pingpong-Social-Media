@@ -18,7 +18,7 @@ export const HomePageHeader = () => {
       <div className="h-14 px-4 flex items-center justify-between relative">
         {/* LEFT */}
         <div className="flex items-center gap-3">
-          <span className="text-blue-500 font-bold text-lg">SocialHybrid</span>
+          <span className="text-blue-500 font-bold text-lg">Pingpong</span>
           <input
             placeholder="Search"
             className="bg-gray-700 text-sm px-3 py-1.5 rounded-full outline-none text-white"
@@ -46,8 +46,15 @@ export const HomePageHeader = () => {
 
         {/* RIGHT */}
         <div className="ml-auto flex items-center gap-4">
-          <button className="w-9 h-9 rounded-full bg-gray-700" />
-          <img src={Avatar} className="w-8 h-8 rounded-full" />
+          <button
+            aria-label="Open quick actions"
+            className="w-9 h-9 rounded-full bg-gray-700"
+          />
+          <img
+            src={Avatar}
+            className="w-8 h-8 rounded-full"
+            alt="User avatar"
+          />
         </div>
       </div>
     </header>
