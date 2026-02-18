@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/input-otp";
 import { useAuthUser } from "@/hooks";
 import { useRequestReset, useResetPassword } from "@/services/auth";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "../ui/spinner";
 
 export function ResetPasswordOTPForm() {
   const [otp, setOtp] = useState("");
@@ -44,7 +44,7 @@ export function ResetPasswordOTPForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center px-1">
       <Card className="max-w-md">
         <CardHeader className="max-h-1/2">
           <CardTitle>Verify Password Reset</CardTitle>
