@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { formatDate } from "@/utils";
 import {
-    MoreHorizontal,
-    Send,
-    ThumbsUp,
-    MessageSquare,
-    Share2,
+  MoreHorizontal,
+  Send,
+  ThumbsUp,
+  MessageSquare,
+  Share2,
 } from "lucide-react";
 import { useGetPostById } from "@/services/homepage/post";
 import { PostModal } from "./postmodal";
+import { useLike } from "@/services/homepage/like";
 
 export interface PostData {
   id: string;
@@ -33,9 +34,10 @@ interface PostProps {
 
 export const Post = ({ post }: PostProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [isLike, setIsLike] = useState(post.isLiked);
+  const [likeCount, setLikeCount] = useState(post.stats.likeCount);
   const { data: fullPost } = useGetPostById(post.id, isModalOpen);
-
+  const { mutate: like } = useLike();
   const authorName = post.author?.username || "Unknown User";
   const authorAvatar =
     post.author?.avatar ||
@@ -44,7 +46,22 @@ export const Post = ({ post }: PostProps) => {
   const handleCommentClick = () => {
     setIsModalOpen(true);
   };
+  const handleLikeClick = () => {
+    const nextLike = !isLike;
 
+    setIsLike(nextLike);
+    setLikeCount((count) => (nextLike ? count + 1 : count - 1));
+
+    like(
+      { targetId: post.id, type: "POST" },
+      {
+        onError: () => {
+          setIsLike(isLike);
+          setLikeCount((count) => (isLike ? count + 1 : count - 1));
+        },
+      },
+    );
+  };
   return (
     <>
       <div className="w-full max-w-md bg-linear-to-b from-gray-900 to-gray-950 rounded-lg overflow-hidden shadow-xl">
@@ -95,20 +112,23 @@ export const Post = ({ post }: PostProps) => {
         {/* Stats */}
         <div className="p-4">
           <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
-            <span>👍 {post.stats.likeCount}</span>
+            <span>👍 {likeCount}</span>
             <span>
-              {post.stats.commentCount} comments ·{" "}
-              {Math.floor(post.stats.likeCount / 3)} shares
+              {post.stats.commentCount} comments · {Math.floor(likeCount / 3)}{" "}
+              shares
             </span>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center justify-around border-t border-gray-800 pt-3">
-            <button className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+            <button
+              onClick={handleLikeClick}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            >
               <ThumbsUp
-                className={`w-4 h-4 ${post.isLiked ? "text-blue-400" : ""}`}
+                className={`w-4 h-4 ${isLike ? "text-blue-400" : ""}`}
               />
-              <span className="text-sm">{post.isLiked ? "Liked" : "Like"}</span>
+              <span className="text-sm">{isLike ? "Liked" : "Like"}</span>
             </button>
             <button
               onClick={handleCommentClick}
