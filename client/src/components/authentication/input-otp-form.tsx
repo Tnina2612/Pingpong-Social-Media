@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/input-otp";
 import { useAuthUser } from "@/hooks";
 import { useResendOtp, useVerifyOtp } from "@/services/auth";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "../ui/spinner";
 
 export function InputOTPForm() {
   const [otp, setOtp] = useState("");

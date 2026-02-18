@@ -1,6 +1,6 @@
 import type { User } from "./user";
 
-export interface Comment {
+export interface CommentType {
   id: string;
   content: string;
   mediaUrls?: string[];

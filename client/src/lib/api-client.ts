@@ -1,10 +1,40 @@
-import { useAuthUser } from "@/hooks";
 import axios from "axios";
+import { useAuthUser } from "@/hooks";
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
   withCredentials: true,
 });
+
+let isRefreshing = false;
+
+type RefreshSubscriber = {
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+};
+
+let refreshSubscribers: RefreshSubscriber[] = [];
+
+function subscribeTokenRefresh(
+  resolve: (token: string) => void,
+  reject: (error: any) => void,
+) {
+  refreshSubscribers.push({ resolve, reject });
+}
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach(({ resolve }) => {
+    resolve(token);
+  });
+  refreshSubscribers = [];
+}
+
+function onRefreshFailed(error: any) {
+  refreshSubscribers.forEach(({ reject }) => {
+    reject(error);
+  });
+  refreshSubscribers = [];
+}
 
 apiClient.interceptors.request.use(
   (config) => {
@@ -17,16 +47,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
-function subscribeTokenRefresh(cb: (token: string) => void) {
-  refreshSubscribers.push(cb);
-}
-function onRefreshed(token: string) {
-  refreshSubscribers.forEach((cb) => cb(token));
-  refreshSubscribers = [];
-}
-
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -36,11 +56,16 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(apiClient(originalRequest));
-          });
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh(
+            (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(apiClient(originalRequest));
+            },
+            (error: any) => {
+              reject(error);
+            },
+          );
         });
       }
 
@@ -48,24 +73,25 @@ apiClient.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          "http://localhost:3000/api/auth/refresh",
+          `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true },
         );
 
         const newAccessToken = res.data.accessToken;
 
-        useAuthUser
-          .getState()
-          .setAuthUser(useAuthUser.getState().user!, newAccessToken);
+        const authState = useAuthUser.getState();
+        authState.setAuthUser(authState.user!, newAccessToken);
 
         onRefreshed(newAccessToken);
+        originalRequest.headers.setAuthorization(`Bearer ${newAccessToken}`);
 
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
       } catch (err) {
+        onRefreshFailed(err);
         useAuthUser.getState().clearAuth();
         window.location.href = "/login";
+
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

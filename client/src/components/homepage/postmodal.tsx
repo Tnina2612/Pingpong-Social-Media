@@ -1,14 +1,14 @@
 import { X } from "lucide-react";
 import { useState } from "react";
-import type { PostData } from "./post";
-import { CommentItem } from "./comment";
 import {
-  useGetCommentById,
   useCreateComment,
+  useGetCommentsByPost,
 } from "@/services/homepage/comment";
+import type { PostType } from "@/types";
+import { Comment } from "./comment";
 
 interface Props {
-  post: PostData;
+  post: PostType;
   onClose: () => void;
 }
 
@@ -19,8 +19,11 @@ export const PostModal = ({ post, onClose }: Props) => {
     new Set(),
   );
 
-  // 🔥 Root comments only
-  const { data: comments = [], isLoading } = useGetCommentById(post.id, true);
+  // Fetch root comments only
+  const { data: comments = [], isLoading } = useGetCommentsByPost(
+    post.id,
+    true,
+  );
 
   const { mutate: createComment, isPending } = useCreateComment();
 
@@ -75,6 +78,7 @@ export const PostModal = ({ post, onClose }: Props) => {
             <div className="flex items-center gap-3">
               <img
                 src={post.author.avatar || "/default-avatar.png"}
+                alt={`${post.author.username}'s avatar`}
                 className="w-8 h-8 rounded-full"
               />
               <span className="font-semibold text-sm text-blue-100">
@@ -82,11 +86,14 @@ export const PostModal = ({ post, onClose }: Props) => {
               </span>
             </div>
 
-            <X
-              size={20}
-              className="cursor-pointer text-blue-300"
+            <button
+              type="button"
               onClick={onClose}
-            />
+              aria-label="close"
+              className="cursor-pointer text-blue-300 rounded-full p-1 hover:bg-blue-900/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <X size={20} aria-hidden="true" />
+            </button>
           </div>
 
           {/* Caption */}
@@ -109,7 +116,7 @@ export const PostModal = ({ post, onClose }: Props) => {
               </div>
             ) : (
               comments.map((comment) => (
-                <CommentItem
+                <Comment
                   key={comment.id}
                   comment={comment}
                   expandedComments={expandedComments}

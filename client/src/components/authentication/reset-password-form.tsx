@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { useAuthUser } from "@/hooks";
 import { useRequestReset } from "@/services/auth";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "../ui/spinner";
 
 export function ResetPasswordForm() {
   const [email, setEmail] = useState("");

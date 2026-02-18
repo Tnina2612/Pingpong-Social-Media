@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/input-otp";
 import { useAuthUser } from "@/hooks";
 import { useRequestReset, useResetPassword } from "@/services/auth";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "../ui/spinner";
 
 export function ResetPasswordOTPForm() {
   const [otp, setOtp] = useState("");
