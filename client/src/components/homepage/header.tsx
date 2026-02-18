@@ -1,6 +1,7 @@
-import { NavLink } from "react-router-dom";
 import { House, MessageCircle, UsersRound } from "lucide-react";
+import { NavLink } from "react-router-dom";
 import Avatar from "@/assets/avatar.png";
+
 interface ItemProps {
   id: number;
   icon: React.ElementType;
@@ -12,6 +13,7 @@ const navItems: ItemProps[] = [
   { id: 2, icon: MessageCircle, path: "message" },
   { id: 3, icon: UsersRound, path: "friends" },
 ];
+
 export const HomePageHeader = () => {
   return (
     <header className="fixed top-0 z-50 w-full bg-gray-800 border-b border-gray-700">

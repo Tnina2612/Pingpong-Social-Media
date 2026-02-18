@@ -1,21 +1,22 @@
-import { useGetReplies } from "@/services/homepage";
-import type { Comment } from "@/types";
 import { ChevronDown } from "lucide-react";
-interface CommentItemProps {
-  comment: Comment;
+import { useGetReplies } from "@/services/homepage";
+import type { CommentType } from "@/types";
+
+interface CommentProps {
+  comment: CommentType;
   depth?: number;
   expandedComments: Set<string>;
   toggleReplies: (id: string) => void;
   onReply?: (id: string) => void;
 }
 
-export const CommentItem = ({
+export const Comment = ({
   comment,
   depth = 0,
   expandedComments,
   toggleReplies,
   onReply,
-}: CommentItemProps) => {
+}: CommentProps) => {
   const isExpanded = expandedComments.has(comment.id);
 
   const { data: replies = [], isLoading } = useGetReplies(
@@ -70,7 +71,8 @@ export const CommentItem = ({
             <div className="text-xs text-blue-300/50">Loading replies...</div>
           ) : (
             replies.map((reply) => (
-              <CommentItem
+              // Recursive layout
+              <Comment
                 key={reply.id}
                 comment={reply}
                 depth={depth + 1}

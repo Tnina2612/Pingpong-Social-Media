@@ -1,8 +1,8 @@
-import { apiClient } from "@/lib";
-import type { ResponseMessage } from "@/types";
 import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
+import { apiClient } from "@/lib";
+import type { ResponseMessage } from "@/types";
 
 export const useLike = () => {
   return useMutation({

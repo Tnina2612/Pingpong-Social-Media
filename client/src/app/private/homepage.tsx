@@ -1,6 +1,6 @@
-import { HomeLayout } from "@/components/homepage";
-import { Post, type PostData } from "@/components/homepage/post";
+import { HomeLayout, Post } from "@/components/homepage";
 import { useGetAllPosts } from "@/services/homepage/post";
+import type { PostType } from "@/types";
 
 export const HomePage = () => {
   const { data: posts = [], isLoading, error } = useGetAllPosts();
@@ -27,7 +27,7 @@ export const HomePage = () => {
         {posts.length === 0 ? (
           <div className="text-center text-gray-400">No posts yet</div>
         ) : (
-          posts.map((post: PostData) => <Post key={post.id} post={post} />)
+          posts.map((post: PostType) => <Post key={post.id} post={post} />)
         )}
       </div>
     </HomeLayout>

@@ -1,45 +1,28 @@
-import { useState } from "react";
-import { formatDate } from "@/utils";
 import {
-    MoreHorizontal,
-    Send,
-    ThumbsUp,
-    MessageSquare,
-    Share2,
+  MessageSquare,
+  MoreHorizontal,
+  Send,
+  Share2,
+  ThumbsUp,
 } from "lucide-react";
+import { useState } from "react";
 import { useGetPostById } from "@/services/homepage/post";
+import type { PostType } from "@/types";
+import { formatDate } from "@/utils";
 import { PostModal } from "./postmodal";
 
-export interface PostData {
-  id: string;
-  content: string;
-  mediaUrls?: string[];
-  createdAt: string;
-  author: {
-    id?: string;
-    username?: string;
-    avatar?: string;
-  };
-  isLiked: boolean;
-  stats: {
-    likeCount: number;
-    commentCount: number;
-  };
-}
-
 interface PostProps {
-  post: PostData;
+  post: PostType;
 }
 
 export const Post = ({ post }: PostProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  const { data: fullPost } = useGetPostById(post.id, isModalOpen);
 
   const authorName = post.author?.username || "Unknown User";
   const authorAvatar =
     post.author?.avatar ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
+  const { data: fullPost } = useGetPostById(post.id, isModalOpen);
 
   const handleCommentClick = () => {
     setIsModalOpen(true);
@@ -70,7 +53,10 @@ export const Post = ({ post }: PostProps) => {
               />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
             </div>
-            <button className="text-gray-400 hover:text-white">
+            <button
+              className="text-gray-400 hover:text-white"
+              aria-label="Open post options menu"
+            >
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
