@@ -1,9 +1,9 @@
 import {
-  Body,
   Controller,
   Delete,
   FileTypeValidator,
   MaxFileSizeValidator,
+  Param,
   ParseFilePipe,
   Post,
   UploadedFile,
@@ -114,15 +114,15 @@ export class UploadController {
     description: "Invalid publicId",
   })
   @ApiResponse({
-    status: 401,
-    description: "Unauthorized - invalid or missing token",
-  })
-  @ApiResponse({
     status: 404,
     description: "File not found",
   })
-  @Delete()
-  async deleteMedia(@Body("publicId") publicId: string) {
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized - invalid or missing token",
+  })
+  @Delete("/:publicId")
+  async deleteMedia(@Param("publicId") publicId: string) {
     return this.uploadService.deleteMedia(publicId);
   }
 }
