@@ -62,6 +62,7 @@ export class PostsController {
     return this.postService.create(id, dto);
   }
 
+  // GET /api/posts/:postId
   @ApiOperation({
     summary: "Get post by ID",
     description: "Retrieves a specific post by its unique identifier",
