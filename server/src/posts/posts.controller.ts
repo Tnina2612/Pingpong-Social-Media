@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -62,6 +70,7 @@ export class PostsController {
     return this.postService.create(id, dto);
   }
 
+  // GET /api/posts/:postId
   @ApiOperation({
     summary: "Get post by ID",
     description: "Retrieves a specific post by its unique identifier",
@@ -85,7 +94,45 @@ export class PostsController {
     description: "Unauthorized - invalid or missing token",
   })
   @Get("/:postId")
-  async findById(@GetUser("id") id: string, @Param("postId") postId: string) {
-    return this.postService.findById(id, postId);
+  async findById(
+    @GetUser("id") userId: string,
+    @Param("postId") postId: string,
+  ) {
+    return this.postService.findById(postId, userId);
+  }
+
+  // DELETE /api/posts/:postId
+  @ApiOperation({
+    summary: "Delete a post",
+    description:
+      "Deletes a post by its ID. Only the post author can delete their own post.",
+  })
+  @ApiParam({
+    name: "postId",
+    description: "ID of the post to delete",
+    example: "550e8400-e29b-41d4-a716-446655440000",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Post deleted successfully",
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - user is not the author of the post",
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Post not found",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized - invalid or missing token",
+  })
+  @Delete("/:postId")
+  async deletePost(
+    @GetUser("id") userId: string,
+    @Param("postId") postId: string,
+  ) {
+    return this.postService.deletePost(postId, userId);
   }
 }

@@ -11,6 +11,7 @@ import { LikesModule } from "./likes/likes.module";
 import { PostsModule } from "./posts/posts.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
 import { SampleModule } from "./sample/sample.module";
+import { UploadModule } from "./upload/upload.module";
 
 export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
   return [
@@ -52,6 +53,7 @@ async function bootstrap() {
       PostsModule,
       CommentsModule,
       LikesModule,
+      UploadModule,
     ],
   });
 
