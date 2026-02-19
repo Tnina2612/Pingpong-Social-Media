@@ -5,20 +5,15 @@ import { CloudinaryService } from "./cloudinary.service";
 
 @Global()
 @Module({
-  providers: [
-    {
-      provide: "CLOUDINARY",
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        return cloudinary.config({
-          cloud_name: config.get<string>("CLOUDINARY_CLOUD_NAME"),
-          api_key: config.get<string>("CLOUDINARY_API_KEY"),
-          api_secret: config.get<string>("CLOUDINARY_API_SECRET"),
-        });
-      },
-    },
-    CloudinaryService,
-  ],
+  providers: [CloudinaryService],
   exports: [CloudinaryService],
 })
-export class CloudinaryModule {}
+export class CloudinaryModule {
+  constructor(private readonly config: ConfigService) {
+    cloudinary.config({
+      cloud_name: this.config.get<string>("CLOUDINARY_CLOUD_NAME"),
+      api_key: this.config.get<string>("CLOUDINARY_API_KEY"),
+      api_secret: this.config.get<string>("CLOUDINARY_API_SECRET"),
+    });
+  }
+}
