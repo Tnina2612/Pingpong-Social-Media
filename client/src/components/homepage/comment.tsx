@@ -1,5 +1,7 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ThumbsUp } from "lucide-react";
+import { useState } from "react";
 import { useGetReplies } from "@/services/homepage";
+import { useLike } from "@/services/homepage/like";
 import type { CommentType } from "@/types";
 
 interface CommentProps {
@@ -18,12 +20,30 @@ export const Comment = ({
   onReply,
 }: CommentProps) => {
   const isExpanded = expandedComments.has(comment.id);
-
+  const [isLike, setIsLike] = useState(comment.isLiked);
+  const [likeCount, setLikeCount] = useState(comment.stats.likeCount);
+  const { mutate: like } = useLike();
   const { data: replies = [], isLoading } = useGetReplies(
     comment.id,
     isExpanded,
   );
+  const handleLikeClick = () => {
+    const nextLike = !isLike;
 
+    setIsLike(nextLike);
+    setLikeCount((count) => (nextLike ? count + 1 : count - 1));
+
+    like(
+      { targetId: comment.id, type: "COMMENT" },
+      {
+        onError: () => {
+          // rollback nếu fail
+          setIsLike(isLike);
+          setLikeCount((count) => (isLike ? count + 1 : count - 1));
+        },
+      },
+    );
+  };
   const hasReplies = comment.stats.replyCount > 0;
 
   return (
@@ -37,6 +57,18 @@ export const Comment = ({
         </p>
 
         <div className="flex gap-2 mt-1">
+          <button
+            onClick={handleLikeClick}
+            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+          >
+            <ThumbsUp
+              size={14}
+              className={`transition-colors ${
+                isLike ? "text-blue-400" : "text-blue-300/50"
+              }`}
+            />
+            {likeCount}
+          </button>
           {onReply && (
             <button
               onClick={() => onReply(comment.id)}

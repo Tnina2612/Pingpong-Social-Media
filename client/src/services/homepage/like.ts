@@ -4,14 +4,16 @@ import toast from "react-hot-toast";
 import { apiClient } from "@/lib";
 import type { ResponseMessage } from "@/types";
 
+interface LikeProps {
+  targetId: string;
+  type: "POST" | "COMMENT";
+}
+
 export const useLike = () => {
   return useMutation({
-    mutationFn: async (targetId: string) => {
-      const res = await apiClient.post("likes", { targetId });
+    mutationFn: async (data: LikeProps) => {
+      const res = await apiClient.post("likes", data);
       return res.data;
-    },
-    onSuccess: async (res) => {
-      toast.success(res.message);
     },
     onError: async (err: AxiosError) => {
       const errorMessage =

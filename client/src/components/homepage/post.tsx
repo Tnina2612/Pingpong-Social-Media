@@ -6,6 +6,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { useState } from "react";
+import { useLike } from "@/services/homepage/like";
 import { useGetPostById } from "@/services/homepage/post";
 import type { PostType } from "@/types";
 import { formatDate } from "@/utils";
@@ -17,15 +18,33 @@ interface PostProps {
 
 export const Post = ({ post }: PostProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [isLike, setIsLike] = useState(post.isLiked);
+  const [likeCount, setLikeCount] = useState(post.stats.likeCount);
+  const { data: fullPost } = useGetPostById(post.id, isModalOpen);
+  const { mutate: like, isPending } = useLike();
   const authorName = post.author?.username || "Unknown User";
   const authorAvatar =
     post.author?.avatar ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
-  const { data: fullPost } = useGetPostById(post.id, isModalOpen);
 
   const handleCommentClick = () => {
     setIsModalOpen(true);
+  };
+
+  const handleLikeClick = () => {
+    const nextLike = !isLike;
+    setIsLike(nextLike);
+    setLikeCount((count) => (nextLike ? count + 1 : count - 1));
+
+    like(
+      { targetId: post.id, type: "POST" },
+      {
+        onError: () => {
+          setIsLike(isLike);
+          setLikeCount((count) => (isLike ? count + 1 : count - 1));
+        },
+      },
+    );
   };
 
   return (
@@ -48,13 +67,14 @@ export const Post = ({ post }: PostProps) => {
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Send
-                className={`w-5 h-5 ${post.isLiked ? "text-blue-400" : "text-gray-400"}`}
-              />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
+              <button
+                className={`cursor-pointer text-gray-400 hover:text-white mt-1`}
+              >
+                <Send className={`w-5 h-5`} />
+              </button>
             </div>
             <button
-              className="text-gray-400 hover:text-white"
+              className="cursor-pointer text-gray-400 hover:text-white ml-2"
               aria-label="Open post options menu"
             >
               <MoreHorizontal className="w-5 h-5" />
@@ -81,29 +101,34 @@ export const Post = ({ post }: PostProps) => {
         {/* Stats */}
         <div className="p-4">
           <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
-            <span>👍 {post.stats.likeCount}</span>
+            <span>👍 {likeCount}</span>
             <span>
-              {post.stats.commentCount} comments ·{" "}
-              {Math.floor(post.stats.likeCount / 3)} shares
+              {post.stats.commentCount} comments · {Math.floor(likeCount / 3)}{" "}
+              shares
             </span>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center justify-around border-t border-gray-800 pt-3">
-            <button className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+            <button
+              onClick={handleLikeClick}
+              disabled={isPending}
+              aria-disabled={isPending}
+              className="cursor-pointer flex items-center gap-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <ThumbsUp
-                className={`w-4 h-4 ${post.isLiked ? "text-blue-400" : ""}`}
+                className={`w-4 h-4 ${isLike ? "text-blue-400" : ""}`}
               />
-              <span className="text-sm">{post.isLiked ? "Liked" : "Like"}</span>
+              <span className="text-sm">{isLike ? "Liked" : "Like"}</span>
             </button>
             <button
               onClick={handleCommentClick}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              className="cursor-pointer flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
             >
               <MessageSquare className="w-4 h-4" />
               <span className="text-sm">Comment</span>
             </button>
-            <button className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+            <button className="cursor-pointer flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
               <Share2 className="w-4 h-4" />
               <span className="text-sm">Share</span>
             </button>
