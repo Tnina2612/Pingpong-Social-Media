@@ -8,6 +8,7 @@ interface LikeProps {
   targetId: string;
   type: "POST" | "COMMENT";
 }
+
 export const useLike = () => {
   return useMutation({
     mutationFn: async (data: LikeProps) => {

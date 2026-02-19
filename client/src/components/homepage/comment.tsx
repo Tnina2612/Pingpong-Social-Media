@@ -1,24 +1,24 @@
-import { useGetReplies } from "@/services/homepage";
-import type { Comment } from "@/types";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ThumbsUp } from "lucide-react";
 import { useState } from "react";
-import { ThumbsUp } from "lucide-react";
+import { useGetReplies } from "@/services/homepage";
 import { useLike } from "@/services/homepage/like";
-interface CommentItemProps {
-  comment: Comment;
+import type { CommentType } from "@/types";
+
+interface CommentProps {
+  comment: CommentType;
   depth?: number;
   expandedComments: Set<string>;
   toggleReplies: (id: string) => void;
   onReply?: (id: string) => void;
 }
 
-export const CommentItem = ({
+export const Comment = ({
   comment,
   depth = 0,
   expandedComments,
   toggleReplies,
   onReply,
-}: CommentItemProps) => {
+}: CommentProps) => {
   const isExpanded = expandedComments.has(comment.id);
   const [isLike, setIsLike] = useState(comment.isLiked);
   const [likeCount, setLikeCount] = useState(comment.stats.likeCount);
@@ -103,7 +103,8 @@ export const CommentItem = ({
             <div className="text-xs text-blue-300/50">Loading replies...</div>
           ) : (
             replies.map((reply) => (
-              <CommentItem
+              // Recursive layout
+              <Comment
                 key={reply.id}
                 comment={reply}
                 depth={depth + 1}
