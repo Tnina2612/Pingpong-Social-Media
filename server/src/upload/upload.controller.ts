@@ -1,5 +1,7 @@
 import {
+  Body,
   Controller,
+  Delete,
   FileTypeValidator,
   MaxFileSizeValidator,
   ParseFilePipe,
@@ -18,9 +20,10 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { UploadResponseDto } from "./response/upload.response";
 import { UploadService } from "./upload.service";
 
-@ApiTags("File Uploading")
+@ApiTags("Media Uploading")
 @ApiBearerAuth()
 @Controller("upload")
 @UseGuards(JwtAuthGuard)
@@ -51,26 +54,7 @@ export class UploadController {
   @ApiResponse({
     status: 201,
     description: "File uploaded successfully",
-    schema: {
-      type: "object",
-      properties: {
-        url: {
-          type: "string",
-          example: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-          description: "Public URL of the uploaded file",
-        },
-        publicId: {
-          type: "string",
-          example: "sample_image_123",
-          description: "Cloudinary public ID for managing the file",
-        },
-        type: {
-          type: "string",
-          example: "image",
-          description: "Resource type (image or video)",
-        },
-      },
-    },
+    type: UploadResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -99,5 +83,46 @@ export class UploadController {
     file: Express.Multer.File,
   ) {
     return this.uploadService.uploadMedia(file);
+  }
+
+  // DELETE /api/upload
+  @ApiOperation({
+    summary: "Delete media file",
+    description:
+      "Deletes a previously uploaded file from Cloudinary using its public ID",
+  })
+  @ApiBody({
+    description: "Public ID of the file to delete",
+    schema: {
+      type: "object",
+      properties: {
+        publicId: {
+          type: "string",
+          example: "sample_image_123",
+          description: "Cloudinary public ID of the file to delete",
+        },
+      },
+      required: ["publicId"],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: "File deleted successfully",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Invalid publicId",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized - invalid or missing token",
+  })
+  @ApiResponse({
+    status: 404,
+    description: "File not found",
+  })
+  @Delete()
+  async deleteMedia(@Body("publicId") publicId: string) {
+    return this.uploadService.deleteMedia(publicId);
   }
 }

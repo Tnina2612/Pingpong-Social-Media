@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { v2 as cloudinary } from "cloudinary";
 import * as streamifier from "streamifier";
 import { CloudinaryResponse } from "./response";
@@ -14,7 +18,7 @@ export class CloudinaryService {
       } else if (file.mimetype.startsWith("video/")) {
         resourceType = "video";
       } else {
-        return reject(new Error("Unsupported file type"));
+        return reject(new BadRequestException("Unsupported file type"));
       }
 
       const uploadStream = cloudinary.uploader.upload_stream(
@@ -36,7 +40,7 @@ export class CloudinaryService {
   // Helper to delete files (e.g., when a user deletes a post)
   async deleteFile(publicId: string) {
     if (!publicId) {
-      throw new Error("publicId is required");
+      throw new BadRequestException("publicId is required");
     }
 
     try {

@@ -19,4 +19,17 @@ export class UploadService {
       throw new Error("Failed to upload media");
     }
   }
+
+  async deleteMedia(publicId: string) {
+    try {
+      const result = await this.cloudinaryService.deleteFile(publicId);
+
+      return {
+        message: "Media deleted successfully",
+        result,
+      };
+    } catch (error) {
+      throw new Error("Failed to delete media");
+    }
+  }
 }
