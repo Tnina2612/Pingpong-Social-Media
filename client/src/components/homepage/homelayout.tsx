@@ -5,8 +5,8 @@ export const HomeLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="min-h-screen bg-black">
       <HomePageHeader />
 
-      <div className="pt-24 px-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-3 gap-6">
+      <div className="pt-20 relative">
+        <div className="max-w-480 mx-auto grid grid-cols-[320px_1fr_320px] gap-0">
           {children}
         </div>
       </div>
