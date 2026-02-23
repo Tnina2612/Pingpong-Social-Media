@@ -12,6 +12,9 @@ import { RedisModule } from "./redis/redis.module";
 import { SampleModule } from "./sample/sample.module";
 import { UploadModule } from "./upload/upload.module";
 import { UsersModule } from "./users/users.module";
+import { ServerModule } from "./server/server.module";
+import { ChannelModule } from "./channel/channel.module";
+import { MessageModule } from "./message/message.module";
 
 @Module({
   imports: [
@@ -29,6 +32,9 @@ import { UsersModule } from "./users/users.module";
     CommentsModule,
     LikesModule,
     UploadModule,
+    ServerModule,
+    ChannelModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

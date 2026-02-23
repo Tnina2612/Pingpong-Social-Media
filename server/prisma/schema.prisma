@@ -36,7 +36,6 @@ model User {
 
   ownedServers      Server[]
   memberships       Member[]
-  messages          Message[]
 }
 
 model Friendship {
@@ -111,7 +110,7 @@ model Server {
   id        String   @id @default(uuid())
   name      String
   iconUrl   String?
-
+  iconPublicId String?
   owner     User     @relation(fields: [ownerId], references: [id])
   ownerId   String
 
@@ -142,7 +141,7 @@ model Member {
 
   nickname  String?
   roles     String[] @default([]) // Placeholder for Role IDs
-
+  messages Message[]
   @@unique([userId, serverId]) // User can only be in a server once
 }
 
@@ -152,15 +151,33 @@ model Message {
   updatedAt   DateTime @updatedAt
 
   content     String?
-  attachments String[] @default([])
+  deleted     Boolean  @default(false)
+
+  // Reply 1 cấp
+  replyToId   String?
+  replyTo     Message?  @relation("Reply", fields: [replyToId], references: [id])
+  replies     Message[] @relation("Reply")
+
+  attachments Attachment[]
 
   channel     Channel  @relation(fields: [channelId], references: [id])
   channelId   String
 
-  sender      User     @relation(fields: [senderId], references: [id])  
-  senderId    String
+  sender      Member   @relation(fields: [memberId], references: [id])
+  memberId    String
+
+  @@index([channelId, createdAt])
 }
 
+model Attachment {
+  id        String @id @default(uuid())
+  url       String
+  publicId  String
+  type      String
+
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String
+}
 enum FriendshipStatus {
   PENDING
   ACCEPTED

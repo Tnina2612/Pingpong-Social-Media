@@ -12,6 +12,9 @@ import { PostsModule } from "./posts/posts.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
 import { SampleModule } from "./sample/sample.module";
 import { UploadModule } from "./upload/upload.module";
+import { ServerModule } from "./server/server.module";
+import { ChannelModule } from "./channel/channel.module";
+import { MessageModule } from "./message/message.module";
 
 export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
   return [
@@ -54,6 +57,9 @@ async function bootstrap() {
       CommentsModule,
       LikesModule,
       UploadModule,
+      ServerModule,
+      ChannelModule,
+      MessageModule,
     ],
   });
 
