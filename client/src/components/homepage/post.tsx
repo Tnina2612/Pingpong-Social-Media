@@ -49,7 +49,7 @@ export const Post = ({ post }: PostProps) => {
 
   return (
     <>
-      <div className="w-full max-w-md bg-linear-to-b from-gray-900 to-gray-950 rounded-lg overflow-hidden shadow-xl">
+      <div className="w-full bg-[#242526] rounded-lg overflow-hidden shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
@@ -103,8 +103,10 @@ export const Post = ({ post }: PostProps) => {
           <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
             <span>👍 {likeCount}</span>
             <span>
-              {post.stats.commentCount} comments · {Math.floor(likeCount / 3)}{" "}
-              shares
+              {post.stats.commentCount}{" "}
+              {post.stats.commentCount > 1 ? "comments" : "comment"} {" · "}
+              {Math.floor(likeCount / 3)}{" "}
+              {Math.floor(likeCount / 3) > 1 ? "shares" : "share"}{" "}
             </span>
           </div>
 
