@@ -18,5 +18,5 @@ export const formatDate = (dateString: string): string => {
   if (diffHours < 24) {
     return `${diffHours} ${diffHours > 1 ? "hours" : "hour"} ago`;
   }
-  return `${diffDays} ${diffDays > 1 ? "days" : "day"} days ago`;
+  return `${diffDays} ${diffDays > 1 ? "days" : "day"} ago`;
 };
