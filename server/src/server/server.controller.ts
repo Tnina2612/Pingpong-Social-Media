@@ -25,6 +25,9 @@ import { UpdateServerDto } from "./dto/update-server.dto";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { GetUser } from "src/auth/decorators/get-user.decorator";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { RequirePermission } from "permission/require-permission.decorator";
+import { PermissionGuard } from "permission/permission.guard";
+import { JoinServerDto } from "./dto/join-server.dto";
 
 @ApiTags("servers")
 @ApiBearerAuth()
@@ -121,8 +124,6 @@ export class ServerController {
   ) {
     return this.serverService.update(serverId, updateServerDto, file);
   }
-
-  @Delete(":id")
   @ApiOperation({ summary: "Delete a server" })
   @ApiParam({ name: "id", description: "Server ID" })
   @ApiResponse({
@@ -131,7 +132,15 @@ export class ServerController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
+  @RequirePermission("MANAGE_SERVER")
+  @UseGuards(PermissionGuard)
+  @Delete(":id")
   remove(@Param("id") serverId: string, @GetUser("id") userId: string) {
     return this.serverService.remove(serverId, userId);
+  }
+
+  @Post("join")
+  joinServer(@GetUser("id") userId: string, @Body() dto: JoinServerDto) {
+    return this.serverService.joinServer(userId, dto.serverId);
   }
 }

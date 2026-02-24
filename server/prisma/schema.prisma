@@ -116,6 +116,8 @@ model Server {
 
   channels  Channel[]
   members   Member[]
+  roles Role[]
+  createdAt DateTime @default(now())
 }
 
 model Channel {
@@ -140,9 +142,31 @@ model Member {
   serverId  String
 
   nickname  String?
-  roles     String[] @default([]) // Placeholder for Role IDs
+  isMuted  Boolean @default(false)
+  roles     Role[] @relation("MemberRoles")
   messages Message[]
   @@unique([userId, serverId]) // User can only be in a server once
+}
+
+model Role {
+  id String @id @default(uuid())
+  name String
+  position Int @default(0)//hierarchy (cao hơn = quyền cao hơn)
+
+  server Server @relation(fields: [serverId],references: [id])
+  serverId String
+
+  members Member[] @relation("MemberRoles")
+  permissions Permission[] @relation("RolePermissions")
+
+  createdAt DateTime @default(now())
+  @@unique([name,serverId])
+}
+model Permission {
+  id String @id @default(uuid())
+  code String @unique()
+
+  roles Role[] @relation("RolePermissions")
 }
 
 model Message {

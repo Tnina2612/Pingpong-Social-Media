@@ -25,21 +25,48 @@ export class ServerService {
     if (file) {
       uploadResult = await this.uploadService.uploadMedia(file);
     }
-    return this.prisma.server.create({
-      data: {
-        name: dto.name,
-        iconUrl: uploadResult?.url,
-        iconPublicId: uploadResult?.publicId,
-        ownerId: userId,
-        members: {
-          create: {
-            userId,
+    return this.prisma.$transaction(async (tx) => {
+      const server = await tx.server.create({
+        data: {
+          name: dto.name,
+          iconUrl: uploadResult?.url,
+          iconPublicId: uploadResult?.publicId,
+          ownerId: userId,
+        },
+      });
+
+      const permissions = await tx.permission.findMany();
+
+      const ownerRole = await tx.role.create({
+        data: {
+          name: "OWNER",
+          position: 100,
+          serverId: server.id,
+          permissions: {
+            connect: permissions.map((p) => ({ id: p.id })),
           },
         },
-      },
-      include: {
-        members: true,
-      },
+      });
+
+      const everyoneRole = await tx.role.create({
+        data: {
+          name: "EVERYONE",
+          position: 0,
+          serverId: server.id,
+        },
+      });
+
+      await tx.member.create({
+        data: {
+          userId,
+          serverId: server.id,
+          roles: {
+            connect: [{ id: ownerRole.id }, { id: everyoneRole.id }],
+          },
+        },
+      });
+
+      return server;
     });
   }
 
@@ -109,6 +136,44 @@ export class ServerService {
     }
     return this.prisma.server.delete({
       where: { id: serverId },
+    });
+  }
+
+  async joinServer(userId: string, serverId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const server = await tx.server.findUnique({
+        where: { id: serverId },
+      });
+
+      if (!server) {
+        throw new NotFoundException("Server not found");
+      }
+
+      if (server.ownerId === userId) {
+        throw new ForbiddenException("Owner is already in server");
+      }
+
+      const existingMember = await tx.member.findUnique({
+        where: {
+          userId_serverId: {
+            userId,
+            serverId,
+          },
+        },
+      });
+
+      if (existingMember) {
+        throw new ForbiddenException("You are already a member");
+      }
+
+      const member = await tx.member.create({
+        data: {
+          userId,
+          serverId,
+        },
+      });
+
+      return member;
     });
   }
 }

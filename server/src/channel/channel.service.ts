@@ -10,8 +10,11 @@ import { PrismaService } from "src/prisma/prisma.service";
 export class ChannelService {
   constructor(private prisma: PrismaService) {}
   async create(userId: string, dto: CreateChannelDto) {
-    const server = await this.prisma.server.findUnique({
-      where: { id: dto.serverId },
+    const server = await this.prisma.server.findFirst({
+      where: {
+        id: dto.serverId,
+        ownerId: userId,
+      },
     });
     if (!server) {
       throw new NotFoundException("Server not found");
@@ -29,11 +32,33 @@ export class ChannelService {
     });
   }
 
-  async findByServer(serverId: string) {
-    return this.prisma.channel.findMany({
-      where: { serverId },
-      orderBy: { name: "asc" },
+  async findByServer(serverId: string, userId: string) {
+    const server = await this.prisma.server.findFirst({
+      where: {
+        id: serverId,
+        OR: [
+          { ownerId: userId },
+          {
+            members: {
+              some: {
+                userId,
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        channels: {
+          orderBy: { name: "asc" },
+        },
+      },
     });
+
+    if (!server) {
+      throw new ForbiddenException("Access denied");
+    }
+
+    return server.channels;
   }
 
   async delete(channelId: string, userId: string) {

@@ -51,8 +51,11 @@ export class ChannelController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
-  findByServer(@Param("serverId") serverId: string) {
-    return this.channelService.findByServer(serverId);
+  findByServer(
+    @Param("serverId") serverId: string,
+    @GetUser("id") userId: string,
+  ) {
+    return this.channelService.findByServer(serverId, userId);
   }
 
   @Delete(":id")
