@@ -37,8 +37,7 @@ export const Comment = ({
       { targetId: comment.id, type: "COMMENT" },
       {
         onError: () => {
-          // rollback nếu fail
-          setIsLike(isLike);
+          setIsLike(isLike); // Rollback if failed
           setLikeCount((count) => (isLike ? count + 1 : count - 1));
         },
       },
@@ -91,7 +90,7 @@ export const Comment = ({
               />
               {isExpanded
                 ? "Hide replies"
-                : `View ${comment.stats.replyCount} replies`}
+                : `View ${comment.stats.replyCount} ${comment.stats.replyCount > 1 ? "replies" : "reply"}`}
             </button>
           )}
         </div>
