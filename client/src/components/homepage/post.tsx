@@ -22,10 +22,14 @@ export const Post = ({ post }: PostProps) => {
   const [likeCount, setLikeCount] = useState(post.stats.likeCount);
   const { data: fullPost } = useGetPostById(post.id, isModalOpen);
   const { mutate: like, isPending } = useLike();
+
   const authorName = post.author?.username || "Unknown User";
   const authorAvatar =
     post.author?.avatar ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
+  const isVideo = (url: string) => {
+    return /\.mp4($|\?)/i.test(url) || /\.mov($|\?)/i.test(url);
+  };
 
   const handleCommentClick = () => {
     setIsModalOpen(true);
@@ -87,14 +91,24 @@ export const Post = ({ post }: PostProps) => {
           <p className="text-white text-sm">{post.content}</p>
         </div>
 
-        {/* Image */}
+        {/* Image or Video */}
         {post.mediaUrls && post.mediaUrls.length > 0 && (
           <div className="relative">
-            <img
-              src={post.mediaUrls[0]}
-              alt="Post media"
-              className="w-full aspect-video object-cover"
-            />
+            {isVideo(post.mediaUrls[0]) ? (
+              <video
+                src={post.mediaUrls[0]}
+                controls
+                className="w-full aspect-video object-cover"
+              >
+                <track kind="captions" />
+              </video>
+            ) : (
+              <img
+                src={post.mediaUrls[0]}
+                alt="Post media"
+                className="w-full aspect-video object-cover"
+              />
+            )}
           </div>
         )}
 

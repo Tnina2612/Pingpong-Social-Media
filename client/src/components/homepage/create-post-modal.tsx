@@ -16,6 +16,7 @@ import React, { useState } from "react";
 import { useAuthUser } from "@/hooks";
 import { useCreatePost } from "@/services/homepage";
 import { useDeleteMedia, useUploadMedia } from "@/services/homepage/upload";
+import type { UploadType } from "@/types/upload";
 
 const iconMap: Record<string, LucideIcon> = {
   Public: Globe,
@@ -56,8 +57,7 @@ export default function CreatePostModal({ onClose }: Props) {
   const [view, setView] = useState("post");
   const [content, setContent] = useState("");
   const [audience, setAudience] = useState("Friends");
-  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [publicIds, setPublicIds] = useState<string[]>([]);
+  const [mediaList, setMediaList] = useState<UploadType[]>([]);
 
   const { user } = useAuthUser();
   const { mutate: createPost, isPending: isCreatePostPending } =
@@ -75,42 +75,36 @@ export default function CreatePostModal({ onClose }: Props) {
         formData.append("file", file);
         uploadMedia(formData, {
           onSuccess: (data) => {
-            setMediaUrls((prev) => [...prev, data.url]);
-            setPublicIds((prev) => [...prev, data.publicId]);
+            setMediaList((prev) => [...prev, data]);
           },
         });
       });
     }
   };
 
-  const handleRemoveImage = (indexToRemove: number) => {
-    setMediaUrls((prev) =>
-      prev.filter((_url, index) => index !== indexToRemove),
-    );
-    const publicIdToDelete = publicIds.find(
-      (_publicId, index) => index === indexToRemove,
-    );
-    if (publicIdToDelete) deleteMedia({ publicId: publicIdToDelete });
-    setPublicIds((prev) =>
-      prev.filter((publicId) => publicId !== publicIdToDelete),
-    );
+  const handleRemoveMedia = (indexToRemove: number) => {
+    const mediaToDelete = mediaList[indexToRemove];
+    if (mediaToDelete) {
+      deleteMedia({ publicId: mediaToDelete.publicId });
+    }
+    setMediaList((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const handleCloseEditingPost = () => {
     setContent("");
     setAudience("Friends");
-    setMediaUrls([]);
+    const mediaListCopy = [...mediaList];
+    setMediaList([]);
     onClose();
-    const publicIdsCopy = [...publicIds];
-    setPublicIds([]);
-    publicIdsCopy.forEach((publicId) => {
-      deleteMedia({ publicId });
+    mediaListCopy.forEach((media) => {
+      deleteMedia({ publicId: media.publicId });
     });
   };
 
   const handleCreatePost = () => {
     if (!content.trim()) return;
 
+    const mediaUrls = mediaList.map((media) => media.url);
     createPost({
       content,
       mediaUrls,
@@ -118,8 +112,7 @@ export default function CreatePostModal({ onClose }: Props) {
 
     setContent("");
     setAudience("Friends");
-    setMediaUrls([]);
-    setPublicIds([]);
+    setMediaList([]);
     onClose();
   };
 
@@ -191,18 +184,27 @@ export default function CreatePostModal({ onClose }: Props) {
             </div>
 
             {/* Uploaded Images Grid */}
-            {mediaUrls.length > 0 && (
+            {mediaList.length > 0 && (
               <div className="mt-4 grid grid-cols-2 gap-2">
-                {mediaUrls.map((mediaUrl, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={mediaUrl}
-                      alt={`Upload ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
+                {mediaList.map((media, index) => (
+                  <div key={media.publicId} className="relative group">
+                    {media.type === "image" ? (
+                      <img
+                        src={media.url}
+                        alt={`Upload ${index + 1}`}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <video
+                        src={media.url}
+                        className="w-full h-48 object-cover rounded-lg"
+                        controls
+                        preload="metadata"
+                      />
+                    )}
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(index)}
+                      onClick={() => handleRemoveMedia(index)}
                       className="cursor-pointer absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-1.5 shadow-lg transition opacity-0 group-hover:opacity-100"
                       aria-label="Remove image"
                     >
