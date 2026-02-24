@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib";
@@ -31,10 +31,16 @@ export const useGetPostById = (postId: string, enabled: boolean) => {
 };
 
 export const useCreatePost = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: CreatePostProps) => {
       const res = await apiClient.post("posts", data);
       return res.data as PostType;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["getallposts"],
+      });
     },
     onError: async (err: AxiosError) => {
       const errorMessage =
