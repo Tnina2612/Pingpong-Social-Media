@@ -23,7 +23,7 @@ export const HomePageHeader = () => {
           <span className="text-blue-500 font-bold text-lg">Pingpong</span>
           <input
             placeholder="Search"
-            className="bg-gray-700 text-sm px-3 py-1.5 rounded-full outline-none text-white"
+            className="hidden lg:block bg-gray-700 text-sm px-3 py-1.5 rounded-full outline-none text-white"
           />
         </div>
 

@@ -29,11 +29,13 @@ export const HomePage = () => {
 
   return (
     <HomeLayout>
-      {/* Left Sidebar */}
-      <LeftSidebar />
+      {/* Left Sidebar - Hidden on mobile/tablet, visible on desktop (lg+) */}
+      <div className="hidden lg:block">
+        <LeftSidebar />
+      </div>
 
-      {/* Main Content (Center) */}
-      <div className="col-start-2 space-y-6 relative">
+      {/* Main Content (Center) - Always visible */}
+      <div className="space-y-6 relative px-4 lg:px-0">
         <CreatePost />
         <div className="flex flex-col space-y-6 items-center">
           {posts.length === 0 ? (
@@ -44,8 +46,10 @@ export const HomePage = () => {
         </div>
       </div>
 
-      {/* Right Sidebar */}
-      <RightSidebar />
+      {/* Right Sidebar - Hidden on mobile, visible on tablet+ (md+) */}
+      <div className="hidden md:block">
+        <RightSidebar />
+      </div>
     </HomeLayout>
   );
 };
