@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
+import { DeleteMediaDto } from "./dto/delete-media.dto";
 import { UploadResponseDto } from "./response/upload.response";
 
 @Injectable()
@@ -20,9 +21,9 @@ export class UploadService {
     }
   }
 
-  async deleteMedia(publicId: string) {
+  async deleteMedia(dto: DeleteMediaDto) {
     try {
-      const result = await this.cloudinaryService.deleteFile(publicId);
+      const result = await this.cloudinaryService.deleteFile(dto.publicId);
 
       return {
         message: "Media deleted successfully",

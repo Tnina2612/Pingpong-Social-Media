@@ -1,9 +1,9 @@
 import {
+  Body,
   Controller,
   Delete,
   FileTypeValidator,
   MaxFileSizeValidator,
-  Param,
   ParseFilePipe,
   Post,
   UploadedFile,
@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { DeleteMediaDto } from "./dto/delete-media.dto";
 import { UploadResponseDto } from "./response/upload.response";
 import { UploadService } from "./upload.service";
 
@@ -93,17 +94,7 @@ export class UploadController {
   })
   @ApiBody({
     description: "Public ID of the file to delete",
-    schema: {
-      type: "object",
-      properties: {
-        publicId: {
-          type: "string",
-          example: "sample_image_123",
-          description: "Cloudinary public ID of the file to delete",
-        },
-      },
-      required: ["publicId"],
-    },
+    type: DeleteMediaDto,
   })
   @ApiResponse({
     status: 200,
@@ -121,8 +112,8 @@ export class UploadController {
     status: 401,
     description: "Unauthorized - invalid or missing token",
   })
-  @Delete("/:publicId")
-  async deleteMedia(@Param("publicId") publicId: string) {
-    return this.uploadService.deleteMedia(publicId);
+  @Delete()
+  async deleteMedia(@Body() dto: DeleteMediaDto) {
+    return this.uploadService.deleteMedia(dto);
   }
 }

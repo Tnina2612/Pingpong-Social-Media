@@ -53,12 +53,22 @@ export class CloudinaryService {
             `File with publicId "${publicId}" does not exist`,
           );
         }
-        throw new Error(`Failed to delete file with publicId "${publicId}"`);
+        throw new BadRequestException(
+          `Failed to delete file with publicId "${publicId}"`,
+        );
       }
 
       return result;
     } catch (error: any) {
-      throw new Error(
+      // Re-throw NestJS exceptions as-is
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      // Wrap other errors in BadRequestException
+      throw new BadRequestException(
         `Error deleting file with publicId "${publicId}": ${error.message || "Unknown error"}`,
       );
     }
