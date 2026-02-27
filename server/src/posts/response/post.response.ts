@@ -38,6 +38,9 @@ export class PostResponseDto {
   @Expose()
   content: string;
 
+  @ApiProperty({
+    description: "Array of media attachments for the post",
+  })
   @Expose()
   attachments: AttachmentPayload[];
 
