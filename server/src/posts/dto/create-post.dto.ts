@@ -1,34 +1,37 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { AttachmentType } from "@prisma/client";
+import { Type } from "class-transformer";
 import {
   IsArray,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
+  ValidateNested,
 } from "class-validator";
+
+export interface AttachmentPayload {
+  url: string;
+  publicId: string;
+  type: AttachmentType;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
 
 export class CreatePostDto {
   @ApiProperty({
     description: "Content of the post",
     example: "Just shared an amazing photo from my vacation!",
     type: String,
+    required: true,
   })
   @IsString()
   @IsNotEmpty({ message: "Content cannot be empty" })
   content: string;
 
-  @ApiProperty({
-    description: "Array of media URLs attached to the post",
-    example: [
-      "https://example.com/image1.jpg",
-      "https://example.com/image2.jpg",
-    ],
-    type: [String],
-    required: false,
-  })
   @IsArray()
-  @IsString({ each: true })
-  @IsUrl({}, { each: true })
   @IsOptional()
-  mediaUrls?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => Object)
+  attachments: AttachmentPayload[];
 }

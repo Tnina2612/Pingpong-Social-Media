@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -51,6 +52,9 @@ export class PostsController {
   @ApiOperation({
     summary: "Create a new post",
     description: "Creates a new post with optional media attachments",
+  })
+  @ApiBody({
+    type: CreatePostDto,
   })
   @ApiResponse({
     status: 201,

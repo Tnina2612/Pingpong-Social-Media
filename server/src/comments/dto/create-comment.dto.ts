@@ -15,6 +15,7 @@ export class CreateCommentDto {
     type: String,
   })
   @IsUUID()
+  @IsNotEmpty({ message: "Corresponding postId cannot be empty" })
   postId: string;
 
   @ApiProperty({

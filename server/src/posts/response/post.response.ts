@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Expose, Type } from "class-transformer";
 import { AuthorDto } from "src/users/dto";
+import { AttachmentPayload } from "../dto";
 
 export class PostStatsDto {
   @ApiProperty({
@@ -37,13 +38,8 @@ export class PostResponseDto {
   @Expose()
   content: string;
 
-  @ApiProperty({
-    description: "Array of media URLs attached to the post",
-    example: ["https://example.com/image1.jpg"],
-    type: [String],
-  })
   @Expose()
-  mediaUrls: string[];
+  attachments: AttachmentPayload[];
 
   @ApiProperty({
     description: "Date and time when the post was created",

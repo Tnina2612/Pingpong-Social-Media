@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { AttachmentType } from "@prisma/client";
 import { Expose } from "class-transformer";
 
 export class UploadResponseDto {
@@ -20,9 +21,33 @@ export class UploadResponseDto {
 
   @ApiProperty({
     description: "Resource type of the uploaded file",
-    example: "image",
-    enum: ["image", "video"],
+    example: AttachmentType.IMAGE,
+    enum: AttachmentType,
   })
   @Expose()
-  type: "image" | "video";
+  type: AttachmentType;
+
+  @ApiProperty({
+    description: "Original filename of the uploaded file",
+    example: "vacation-photo.jpg",
+    type: String,
+  })
+  @Expose()
+  filename: string;
+
+  @ApiProperty({
+    description: "MIME type of the uploaded file",
+    example: "image/jpeg",
+    type: String,
+  })
+  @Expose()
+  mimeType: string;
+
+  @ApiProperty({
+    description: "File size in bytes",
+    example: 2048576,
+    type: Number,
+  })
+  @Expose()
+  size: number;
 }
