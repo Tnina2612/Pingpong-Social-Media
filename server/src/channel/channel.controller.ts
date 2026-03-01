@@ -1,31 +1,30 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   UseGuards,
 } from "@nestjs/common";
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
-  ApiParam,
   ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
 } from "@nestjs/swagger";
-import { ChannelService } from "./channel.service";
-import { CreateChannelDto } from "./dto/create-channel.dto";
-
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { GetUser } from "src/auth/decorators/get-user.decorator";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { ChannelService } from "./channel.service";
+import { CreateChannelDto } from "./dto";
 
-@ApiTags("channels")
+@ApiTags("Channels")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller("channel")
+@Controller("channels")
 export class ChannelController {
   constructor(private readonly channelService: ChannelService) {}
 
@@ -42,7 +41,6 @@ export class ChannelController {
     return this.channelService.create(userId, dto);
   }
 
-  @Get(":serverId")
   @ApiOperation({ summary: "Get all channels in a server" })
   @ApiParam({ name: "serverId", description: "Server ID" })
   @ApiResponse({
@@ -51,6 +49,7 @@ export class ChannelController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
+  @Get(":serverId")
   findByServer(
     @Param("serverId") serverId: string,
     @GetUser("id") userId: string,
@@ -58,16 +57,18 @@ export class ChannelController {
     return this.channelService.findByServer(serverId, userId);
   }
 
-  @Delete(":id")
   @ApiOperation({ summary: "Delete a channel" })
-  @ApiParam({ name: "id", description: "Channel ID" })
+  @ApiParam({ name: "channelId", description: "Channel ID" })
   @ApiResponse({
     status: 200,
     description: "Channel deleted successfully",
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Channel not found" })
-  delete(@Param("id") channelId: string, @GetUser("id") userId: string) {
+  @Delete(":channelId")
+  delete(@Param("channelId") channelId: string, @GetUser("id") userId: string) {
     return this.channelService.delete(channelId, userId);
   }
+
+  // TODO: Update channel endpoint
 }

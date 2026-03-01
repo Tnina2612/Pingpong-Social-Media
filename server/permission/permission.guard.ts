@@ -36,7 +36,7 @@ export class PermissionGuard implements CanActivate {
       throw new ForbiddenException("Server ID missing");
     }
 
-    // 1️⃣ Find member
+    // 1. Find member
     const member = await this.prisma.member.findUnique({
       where: {
         userId_serverId: {
@@ -57,7 +57,7 @@ export class PermissionGuard implements CanActivate {
       throw new ForbiddenException("You are not a member of this server");
     }
 
-    // 2️⃣ Flatten permissions
+    // 2. Flatten permissions
     const permissions = member.roles.flatMap((role) =>
       role.permissions.map((p) => p.code),
     );

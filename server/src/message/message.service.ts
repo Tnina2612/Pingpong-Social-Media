@@ -1,26 +1,20 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { CreateMessageDto } from "./dto/create-message.dto";
 import { PrismaService } from "src/prisma/prisma.service";
-import { UploadService } from "src/upload/upload.service";
+import { CreateMessageDto } from "./dto";
 import { MessageGateway } from "./message.gateway";
 
 @Injectable()
 export class MessageService {
   constructor(
     private prisma: PrismaService,
-    private uploadService: UploadService,
     private messageGateway: MessageGateway,
   ) {}
-  async create(
-    userId: string,
-    dto: CreateMessageDto,
-    files?: Express.Multer.File[],
-  ) {
+
+  async create(userId: string, dto: CreateMessageDto) {
     const channel = await this.prisma.channel.findUnique({
       where: { id: dto.channelId },
     });
@@ -37,38 +31,50 @@ export class MessageService {
         },
       },
     });
+
     if (!member) {
       throw new ForbiddenException("Not a member");
     }
 
-    if (!dto.content && (!files || files.length === 0)) {
-      throw new BadRequestException("Message cannot be empty");
+    if (dto.replyToId) {
+      const replyToMessage = await this.prisma.message.findUnique({
+        where: { id: dto.replyToId },
+      });
+
+      if (!replyToMessage) {
+        throw new NotFoundException("Reply target message not found");
+      }
+
+      if (replyToMessage.channelId !== dto.channelId) {
+        throw new ForbiddenException(
+          "Cannot reply to a message in a different channel",
+        );
+      }
     }
+
+    // Format attachments for Prisma
+    const attachmentsData =
+      dto.attachments?.map((att) => ({
+        url: att.url,
+        publicId: att.publicId,
+        type: att.type,
+        filename: att.filename,
+        mimeType: att.mimeType,
+        size: att.size,
+      })) || [];
 
     return this.prisma.$transaction(async (tx) => {
       const message = await tx.message.create({
         data: {
-          content: dto.content,
+          content: dto.content ?? null,
           channelId: dto.channelId,
-          memberId: member.id,
           replyToId: dto.replyToId ?? null,
+          memberId: member.id,
+          attachments: {
+            create: attachmentsData,
+          },
         },
       });
-
-      if (files?.length) {
-        for (const file of files) {
-          const upload = await this.uploadService.uploadMedia(file);
-
-          await tx.attachment.create({
-            data: {
-              url: upload.url,
-              publicId: upload.publicId,
-              type: upload.type,
-              messageId: message.id,
-            },
-          });
-        }
-      }
 
       const fullMessage = await tx.message.findUnique({
         where: { id: message.id },
@@ -91,7 +97,28 @@ export class MessageService {
     });
   }
 
-  async findByChannel(channelId: string, cursor?: string) {
+  async findByChannel(userId: string, channelId: string, cursor?: string) {
+    const channel = await this.prisma.channel.findUnique({
+      where: { id: channelId },
+    });
+
+    if (!channel) {
+      throw new NotFoundException("Channel not found");
+    }
+
+    const member = await this.prisma.member.findUnique({
+      where: {
+        userId_serverId: {
+          userId,
+          serverId: channel.serverId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException("Not a member");
+    }
+
     return this.prisma.message.findMany({
       where: { channelId },
       take: 20,

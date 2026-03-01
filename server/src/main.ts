@@ -6,15 +6,16 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { AuthModule } from "./auth/auth.module";
+import { ChannelModule } from "./channel/channel.module";
 import { CommentsModule } from "./comments/comments.module";
 import { LikesModule } from "./likes/likes.module";
+import { MemberModule } from "./member/member.module";
+import { MessageModule } from "./message/message.module";
 import { PostsModule } from "./posts/posts.module";
 import { PrismaExceptionFilter } from "./prisma/prisma-exception.filter";
 import { SampleModule } from "./sample/sample.module";
-import { UploadModule } from "./upload/upload.module";
 import { ServerModule } from "./server/server.module";
-import { ChannelModule } from "./channel/channel.module";
-import { MessageModule } from "./message/message.module";
+import { UploadModule } from "./upload/upload.module";
 
 export function swaggerCustomScript(endpoint: string, tagOrder?: string[]) {
   return [
@@ -45,7 +46,7 @@ async function bootstrap() {
   const apiEndpoint = configService.get("SERVER_URL");
   const config = new DocumentBuilder()
     .addServer(apiEndpoint)
-    .setTitle("AniHub v1 API Docs")
+    .setTitle("Pingpong v1 API Docs")
     .setVersion("1.0")
     .build();
 
@@ -60,6 +61,7 @@ async function bootstrap() {
       ServerModule,
       ChannelModule,
       MessageModule,
+      MemberModule,
     ],
   });
 

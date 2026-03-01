@@ -29,6 +29,10 @@ export class CreatePostDto {
   @IsNotEmpty({ message: "Content cannot be empty" })
   content: string;
 
+  @ApiProperty({
+    description: "Array of attachments for the post",
+    required: false,
+  })
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })

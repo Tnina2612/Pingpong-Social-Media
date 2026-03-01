@@ -1,51 +1,32 @@
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import {
-  Body,
-  Controller,
-  Post,
-  UploadedFiles,
-  UseGuards,
-  UseInterceptors,
-} from "@nestjs/common";
-import {
-  ApiTags,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
-  ApiConsumes,
-  ApiBody,
+  ApiTags,
 } from "@nestjs/swagger";
-import { MessageService } from "./message.service";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import { FileInterceptor } from "@nestjs/platform-express";
 import { GetUser } from "src/auth/decorators/get-user.decorator";
-import { CreateMessageDto } from "./dto/create-message.dto";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { CreateMessageDto } from "./dto";
+import { MessageService } from "./message.service";
 
-@ApiTags("messages")
+@ApiTags("Messages")
 @ApiBearerAuth()
-@Controller("message")
+@Controller("messages")
 @UseGuards(JwtAuthGuard)
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
-  @Post()
-  @UseInterceptors(FileInterceptor("files"))
-  @ApiOperation({ summary: "Create a new message in a channel" })
+  @ApiOperation({
+    summary: "Create a new message",
+    description:
+      "Create a new message with optional file attachments in a channel",
+  })
   @ApiConsumes("multipart/form-data")
   @ApiBody({
-    description: "Create message with optional file attachments",
-    schema: {
-      type: "object",
-      properties: {
-        channelId: { type: "string", format: "uuid" },
-        content: { type: "string", maxLength: 4000 },
-        replyToId: { type: "string", format: "uuid" },
-        files: {
-          type: "string",
-          format: "binary",
-        },
-      },
-      required: ["channelId"],
-    },
+    type: CreateMessageDto,
   })
   @ApiResponse({
     status: 201,
@@ -54,11 +35,17 @@ export class MessageController {
   @ApiResponse({ status: 400, description: "Invalid input" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Channel not found" })
-  async create(
-    @GetUser("id") userId: string,
-    @Body() dto: CreateMessageDto,
-    @UploadedFiles() files?: Express.Multer.File[],
-  ) {
-    return this.messageService.create(userId, dto, files);
+  @Post()
+  async create(@GetUser("id") userId: string, @Body() dto: CreateMessageDto) {
+    return this.messageService.create(userId, dto);
   }
+
+  @Get(":channelId")
+  async findByChannel(@Param() channelId: string, @Query() cursor: string) {
+    return this.messageService.findByChannel(channelId, cursor);
+  }
+
+  // TODO: update message endpoint
+  // TODO: delete message endpoint
+  // TODO: Direct message to another user
 }
