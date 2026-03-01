@@ -1,5 +1,5 @@
-import { X } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   useCreateComment,
   useGetCommentsByPost,
@@ -18,14 +18,50 @@ export const PostModal = ({ post, onClose }: Props) => {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(
     new Set(),
   );
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  
+  const totalMedias = post.mediaUrls?.length || 0;
+  const isVideo = (url: string) => {
+    return /\.mp4($|\?)/i.test(url) || /\.mov($|\?)/i.test(url);
+  };
 
   // Fetch root comments only
   const { data: comments = [], isLoading } = useGetCommentsByPost(
     post.id,
     true,
   );
-
   const { mutate: createComment, isPending } = useCreateComment();
+
+  const handlePreviousImage = () => {
+    setCurrentMediaIndex((prev) => (prev === 0 ? totalMedias - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setCurrentMediaIndex((prev) => (prev === totalMedias - 1 ? 0 : prev + 1));
+  };
+
+  // Keyboard navigation for images
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (totalMedias > 1) {
+        if (e.key === "ArrowLeft") {
+          setCurrentMediaIndex((prev) =>
+            prev === 0 ? totalMedias - 1 : prev - 1,
+          );
+        } else if (e.key === "ArrowRight") {
+          setCurrentMediaIndex((prev) =>
+            prev === totalMedias - 1 ? 0 : prev + 1,
+          );
+        }
+      }
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [totalMedias, onClose]);
 
   const handleSubmitComment = () => {
     if (!commentContent.trim()) return;
@@ -56,16 +92,56 @@ export const PostModal = ({ post, onClose }: Props) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center">
+    <div className="fixed inset-0 h-full backdrop-brightness-40 z-50 flex items-center justify-center">
       <div className="w-[90%] max-w-6xl h-[85vh] bg-[#0e1a2f] rounded-2xl overflow-hidden flex shadow-2xl border border-blue-900/30">
         {/* LEFT - MEDIA */}
-        <div className="w-1/2 bg-black/40 flex items-center justify-center">
+        <div className="w-1/2 bg-black/40 flex items-center justify-center relative">
           {post.mediaUrls?.length ? (
-            <img
-              src={post.mediaUrls[0]}
-              alt="post"
-              className="h-full w-full object-cover"
-            />
+            <>
+              {isVideo(post.mediaUrls[currentMediaIndex]) ? (
+                <video
+                  src={post.mediaUrls[currentMediaIndex]}
+                  controls
+                  className="h-full w-full object-cover"
+                >
+                  <track kind="captions" />
+                </video>
+              ) : (
+                <img
+                  src={post.mediaUrls[currentMediaIndex]}
+                  alt={`post image ${currentMediaIndex + 1}`}
+                  className="h-full w-full object-cover"
+                />
+              )}
+
+              {/* Navigation Buttons - Only show if more than 1 media */}
+              {totalMedias > 1 && (
+                <>
+                  {/* Previous Button */}
+                  <button
+                    onClick={handlePreviousImage}
+                    className="cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-gray-800/80 hover:bg-gray-700/90 rounded-full flex items-center justify-center transition-all shadow-lg"
+                    aria-label="Previous media"
+                  >
+                    <ChevronLeft size={24} className="text-white" />
+                  </button>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={handleNextImage}
+                    className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-gray-800/80 hover:bg-gray-700/90 rounded-full flex items-center justify-center transition-all shadow-lg"
+                    aria-label="Next media"
+                  >
+                    <ChevronRight size={24} className="text-white" />
+                  </button>
+
+                  {/* Image Counter */}
+                  <div className="absolute bottom-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full">
+                    {currentMediaIndex + 1} / {totalMedias}
+                  </div>
+                </>
+              )}
+            </>
           ) : (
             <div className="text-blue-300/50">No media</div>
           )}
