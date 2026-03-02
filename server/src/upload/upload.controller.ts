@@ -88,7 +88,7 @@ export class UploadController {
   })
   @ApiBody({
     description: "Public ID of the file to delete",
-    type: DeleteMediaDto,
+    type: DeleteAttachmentDto,
   })
   @ApiResponse({
     status: 200,

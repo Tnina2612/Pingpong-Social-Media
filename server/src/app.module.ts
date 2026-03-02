@@ -16,10 +16,6 @@ import { SampleModule } from "./sample/sample.module";
 import { ServerModule } from "./server/server.module";
 import { UploadModule } from "./upload/upload.module";
 import { UsersModule } from "./users/users.module";
-import { ServerModule } from "./server/server.module";
-import { ChannelModule } from "./channel/channel.module";
-import { MessageModule } from "./message/message.module";
-import { MemberModule } from './member/member.module';
 
 @Module({
   imports: [
