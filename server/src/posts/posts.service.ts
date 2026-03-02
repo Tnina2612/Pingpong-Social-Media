@@ -19,7 +19,7 @@ export class PostsService {
     return {
       id: post.id,
       content: post.content,
-      mediaUrls: post.mediaUrls,
+      attachments: post.attachments,
       createdAt: post.createdAt,
       author: {
         id: post.author.id,
@@ -34,48 +34,22 @@ export class PostsService {
     };
   }
 
-  /**
-   * Extracts the Cloudinary public_id from a full secure_url.
-   * Handles URLs with or without version numbers and nested folders.
-   */
-  private extractPublicIdFromUrl(url: string): string | null {
-    if (!url || !url.includes("cloudinary.com")) {
-      return null; // Not a valid Cloudinary URL
-    }
+  async findAll(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
+    const take = 20;
+    const skip = (page - 1) * take;
 
-    try {
-      // Regex explanation:
-      // \/upload\/  : Matches the literal string "/upload/"
-      // (?:v\d+\/)? : Non-capturing group for the optional version number (e.g., v1612345/)
-      // ([^\.]+)    : Capturing group 1: Matches everything up to the first period (.)
-      const regex = /\/upload\/(?:v\d+\/)?([^.]+)/;
-      const match = url.match(regex);
-
-      if (match?.[1]) {
-        // match[1] will contain the folder path and the filename (the exact public_id)
-        // e.g., "social-network-uploads/my-image"
-        return match[1];
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error parsing Cloudinary URL:", error);
-      return null;
-    }
-  }
-
-  async findAll(currentUserId: string): Promise<PostResponseDto[]> {
     const posts = await this.prisma.post.findMany({
+      take,
+      skip,
       orderBy: { createdAt: "desc" },
       include: {
-        author: true,
+        author: { select: { id: true, username: true, avatar: true } },
+        attachments: true,
         likes: {
           where: { userId: currentUserId },
           select: { userId: true },
         },
-        _count: {
-          select: { likes: true, comments: true },
-        },
+        _count: { select: { likes: true, comments: true } },
       },
     });
 
@@ -83,10 +57,24 @@ export class PostsService {
   }
 
   async create(userId: string, dto: CreatePostDto) {
+    // Format attachments for Prisma
+    const attachmentsData =
+      dto.attachments?.map((att) => ({
+        url: att.url,
+        publicId: att.publicId,
+        type: att.type,
+        filename: att.filename,
+        mimeType: att.mimeType,
+        size: att.size,
+      })) || [];
+
     return this.prisma.post.create({
       data: {
-        ...dto,
+        content: dto.content,
         authorId: userId,
+        attachments: {
+          create: attachmentsData,
+        },
       },
     });
   }
@@ -98,7 +86,8 @@ export class PostsService {
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
       include: {
-        author: true,
+        author: { select: { id: true, username: true, avatar: true } },
+        attachments: true,
         likes: {
           where: { userId: currentUserId },
           select: { userId: true },
@@ -117,18 +106,23 @@ export class PostsService {
   async deletePost(postId: string, userId: string) {
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
+      include: { attachments: true },
     });
 
     if (!post) throw new NotFoundException("Post not found");
     if (post.authorId !== userId)
       throw new ForbiddenException("Not authorized");
 
-    if (post.mediaUrls && post.mediaUrls.length > 0) {
-      for (const url of post.mediaUrls) {
-        const publicId = this.extractPublicIdFromUrl(url);
-        if (publicId) {
-          await this.cloudinary.deleteFile(publicId);
-        }
+    if (post.attachments && post.attachments.length > 0) {
+      for (const attachment of post.attachments) {
+        // Map database Enum to Cloudinary resource_type
+        let resourceType: "image" | "video" | "raw" = "image";
+        if (attachment.type === "FILE") resourceType = "raw";
+        if (attachment.type === "VIDEO" || attachment.type === "AUDIO")
+          resourceType = "video";
+
+        // Delete using the exact publicId
+        await this.cloudinary.deleteFile(attachment.publicId, resourceType);
       }
     }
 
@@ -136,6 +130,6 @@ export class PostsService {
       where: { id: postId },
     });
 
-    return { message: "Post and associated media deleted" };
+    return { message: "Post and associated media deleted successfully" };
   }
 }

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
+import { getHighestRolePosition } from "utils";
 
 @Injectable()
 export class MemberService {
@@ -30,13 +31,8 @@ export class MemberService {
         throw new ForbiddenException("You cannot kick yourself");
       }
 
-      const currentHighest = Math.max(
-        ...currentMember.roles.map((r) => r.position),
-      );
-
-      const targetHighest = Math.max(
-        ...targetMember.roles.map((r) => r.position),
-      );
+      const currentHighest = getHighestRolePosition(currentMember);
+      const targetHighest = getHighestRolePosition(targetMember);
 
       if (currentHighest <= targetHighest) {
         throw new ForbiddenException(

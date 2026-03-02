@@ -1,10 +1,10 @@
 import { Module } from "@nestjs/common";
-import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { MessageService } from "./message.service";
+import { JwtModule } from "@nestjs/jwt";
+import { UploadService } from "src/upload/upload.service";
 import { MessageController } from "./message.controller";
 import { MessageGateway } from "./message.gateway";
-import { UploadService } from "src/upload/upload.service";
+import { MessageService } from "./message.service";
 
 @Module({
   imports: [
