@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
   MaxFileSizeValidator,
   ParseFilePipe,
   Post,
@@ -20,7 +19,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { DeleteMediaDto } from "./dto/delete-media.dto";
+import { DeleteAttachmentDto } from "./dto";
 import { UploadResponseDto } from "./response/upload.response";
 import { UploadService } from "./upload.service";
 
@@ -67,23 +66,18 @@ export class UploadController {
   })
   @Post()
   @UseInterceptors(FileInterceptor("file")) // 'file' is the field name in form-data
-  async uploadMedia(
+  async uploadAttachment(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          // 1. Limit size to 10MB (adjust as needed)
+          // Limit size to 10MB (adjust as needed)
           new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
-          // 2. Allow only images and videos
-          new FileTypeValidator({
-            fileType:
-              "image/png|image/jpeg|image/jpg|video/mp4|video/quicktime",
-          }),
         ],
       }),
     )
     file: Express.Multer.File,
   ) {
-    return this.uploadService.uploadMedia(file);
+    return this.uploadService.uploadAttachment(file);
   }
 
   // DELETE /api/upload
@@ -113,7 +107,7 @@ export class UploadController {
     description: "Unauthorized - invalid or missing token",
   })
   @Delete()
-  async deleteMedia(@Body() dto: DeleteMediaDto) {
-    return this.uploadService.deleteMedia(dto);
+  async deleteAttachment(@Body() dto: DeleteAttachmentDto) {
+    return this.uploadService.deleteAttachment(dto);
   }
 }

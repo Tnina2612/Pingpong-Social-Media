@@ -1,0 +1,74 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
+import { GetUser } from "src/auth/decorators/get-user.decorator";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { ChannelService } from "./channel.service";
+import { CreateChannelDto } from "./dto";
+
+@ApiTags("Channels")
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller("channels")
+export class ChannelController {
+  constructor(private readonly channelService: ChannelService) {}
+
+  @ApiOperation({ summary: "Create a new channel in a server" })
+  @ApiBody({ type: CreateChannelDto })
+  @ApiResponse({
+    status: 201,
+    description: "Channel created successfully",
+  })
+  @ApiResponse({ status: 400, description: "Invalid input" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @Post()
+  create(@GetUser("id") userId: string, @Body() dto: CreateChannelDto) {
+    return this.channelService.create(userId, dto);
+  }
+
+  @ApiOperation({ summary: "Get all channels in a server" })
+  @ApiParam({ name: "serverId", description: "Server ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Channels retrieved successfully",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 404, description: "Server not found" })
+  @Get(":serverId")
+  findByServer(
+    @Param("serverId") serverId: string,
+    @GetUser("id") userId: string,
+  ) {
+    return this.channelService.findByServer(serverId, userId);
+  }
+
+  @ApiOperation({ summary: "Delete a channel" })
+  @ApiParam({ name: "channelId", description: "Channel ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Channel deleted successfully",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 404, description: "Channel not found" })
+  @Delete(":channelId")
+  delete(@Param("channelId") channelId: string, @GetUser("id") userId: string) {
+    return this.channelService.delete(channelId, userId);
+  }
+
+  // TODO: Update channel endpoint
+}

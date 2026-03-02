@@ -36,7 +36,6 @@ model User {
 
   ownedServers      Server[]
   memberships       Member[]
-  messages          Message[]
 }
 
 model Friendship {
@@ -62,7 +61,7 @@ model Post {
   authorId   String
   
   content    String
-  mediaUrls  String[] @default([])
+  attachments Attachment[]
 
   comments   Comment[]
   likes      Like[]
@@ -109,6 +108,7 @@ model Like {
 
 model Server {
   id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
   name      String
   iconUrl   String?
 
@@ -117,6 +117,7 @@ model Server {
 
   channels  Channel[]
   members   Member[]
+  roles     Role[]
 }
 
 model Channel {
@@ -128,11 +129,14 @@ model Channel {
   serverId  String
 
   messages  Message[]
+  attachments Attachment[]
 }
 
 model Member {
   id        String   @id @default(uuid())
   joinedAt  DateTime @default(now())
+  nickname  String?
+  isMuted   Boolean  @default(false)
 
   user      User     @relation(fields: [userId], references: [id])
   userId    String
@@ -140,10 +144,32 @@ model Member {
   server    Server   @relation(fields: [serverId], references: [id])
   serverId  String
 
-  nickname  String?
-  roles     String[] @default([]) // Placeholder for Role IDs
+  roles     Role[]   @relation("MemberRoles")
+  messages  Message[]
 
   @@unique([userId, serverId]) // User can only be in a server once
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  name      String
+  position  Int      @default(0) // Ascending hierarchy
+
+  server    Server   @relation(fields: [serverId], references: [id])
+  serverId  String
+
+  members   Member[] @relation("MemberRoles")
+  permissions Permission[] @relation("RolePermissions")
+
+  @@unique([name,serverId])
+}
+
+model Permission {
+  id        String   @id @default(uuid())
+  code      String   @unique()
+
+  roles     Role[]   @relation("RolePermissions")
 }
 
 model Message {
@@ -152,13 +178,42 @@ model Message {
   updatedAt   DateTime @updatedAt
 
   content     String?
-  attachments String[] @default([])
+  attachments Attachment[]
+  deleted     Boolean  @default(false)
+
+  replyToId   String?
+  replyTo     Message?  @relation("Reply", fields: [replyToId], references: [id])
+  replies     Message[] @relation("Reply")
 
   channel     Channel  @relation(fields: [channelId], references: [id])
   channelId   String
 
-  sender      User     @relation(fields: [senderId], references: [id])  
-  senderId    String
+  sender      Member   @relation(fields: [memberId], references: [id])
+  memberId    String
+
+  @@index([channelId, createdAt])
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  url       String
+  publicId  String
+  type      AttachmentType
+  filename  String
+  mimeType  String
+  size      Int
+
+  // Belongs to a Message (Discord side)
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String?
+  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId String?
+
+  // Belongs to a Post (Facebook side)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String?
 }
 
 enum FriendshipStatus {
@@ -175,4 +230,11 @@ enum TargetLikeType {
 enum ChannelType {
   TEXT
   VOICE
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
 }

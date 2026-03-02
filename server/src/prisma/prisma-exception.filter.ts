@@ -8,7 +8,7 @@ import { Prisma } from "@prisma/client";
 
 @Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaExceptionFilter implements ExceptionFilter {
-  catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
+  catch(exception: Prisma.PrismaClientKnownRequestError, _host: ArgumentsHost) {
     if (exception.code === "P2002") {
       const target = (exception.meta as { target?: string[] } | undefined)
         ?.target;

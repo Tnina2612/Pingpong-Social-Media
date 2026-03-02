@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -33,6 +34,9 @@ export class CommentsController {
     summary: "Create a comment or reply",
     description:
       "Creates a new comment on a post or reply to an existing comment",
+  })
+  @ApiBody({
+    type: CreateCommentDto,
   })
   @ApiResponse({
     status: 201,
