@@ -6,3 +6,4 @@ export * from "./post";
 export * from "./postmodal";
 export * from "./right-sidebar";
 export * from "./sublayout";
+export * from "./comment";

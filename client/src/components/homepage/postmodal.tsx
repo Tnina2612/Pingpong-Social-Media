@@ -5,7 +5,7 @@ import {
   useGetCommentsByPost,
 } from "@/services/homepage/comment";
 import type { PostType } from "@/types";
-import { Comment } from "../chat/comment";
+import { Comment } from "./comment";
 
 interface Props {
   post: PostType;
