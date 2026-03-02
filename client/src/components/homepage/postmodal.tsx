@@ -19,7 +19,7 @@ export const PostModal = ({ post, onClose }: Props) => {
     new Set(),
   );
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  
+
   const totalMedias = post.mediaUrls?.length || 0;
   const isVideo = (url: string) => {
     return /\.mp4($|\?)/i.test(url) || /\.mov($|\?)/i.test(url);

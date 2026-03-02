@@ -111,7 +111,7 @@ model Server {
   createdAt DateTime @default(now())
   name      String
   iconUrl   String?
-
+  iconPublicId String?
   owner     User     @relation(fields: [ownerId], references: [id])
   ownerId   String
 
@@ -216,6 +216,15 @@ model Attachment {
   postId    String?
 }
 
+model Attachment {
+  id        String @id @default(uuid())
+  url       String
+  publicId  String
+  type      String
+
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String
+}
 enum FriendshipStatus {
   PENDING
   ACCEPTED

@@ -1,10 +1,4 @@
-import {
-  Bookmark,
-  ChevronDown,
-  Clock,
-  FilmIcon,
-  Users,
-} from "lucide-react";
+import { Bookmark, ChevronDown, Clock, FilmIcon, Users } from "lucide-react";
 import { useAuthUser } from "@/hooks";
 
 const menuItems = [
