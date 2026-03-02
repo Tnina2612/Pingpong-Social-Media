@@ -109,7 +109,7 @@ export class ServerService {
     let uploadResult: UploadResponseDto | null = null;
     if (file) {
       if (server.iconPublicId) {
-        await this.uploadService.deleteMedia(server.iconPublicId);
+        await this.uploadService.deleteMedia({ publicId: server.iconPublicId });
       }
       uploadResult = await this.uploadService.uploadMedia(file);
     }
@@ -132,7 +132,7 @@ export class ServerService {
       throw new ForbiddenException("You are not the owner");
     }
     if (server.iconPublicId) {
-      await this.uploadService.deleteMedia(server.iconPublicId);
+      await this.uploadService.deleteMedia({ publicId: server.iconPublicId });
     }
     return this.prisma.server.delete({
       where: { id: serverId },

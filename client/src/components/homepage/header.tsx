@@ -33,6 +33,7 @@ export const HomePageHeader = () => {
             <NavLink
               key={id}
               to={path}
+              end={path === ""}
               className={({ isActive }) =>
                 `p-2 rounded-md transition ${
                   isActive

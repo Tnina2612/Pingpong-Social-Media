@@ -53,43 +53,48 @@ export const appRouter = createBrowserRouter([
   },
   {
     loader: authLoader,
+    path: "homepage",
+    lazy: async () => {
+      const { HomeLayout } = await import("../app/private/homelayout");
+      return { Component: HomeLayout };
+    },
     children: [
       {
-        path: "homepage",
+        index: true,
         lazy: async () => {
           const { HomePage } = await import("../app/private/homepage");
           return { Component: HomePage };
         },
         ErrorBoundary: ErrorPage,
       },
+      {
+        path: "message",
+        lazy: async () => {
+          const { ChatMessage } = await import("../app/private/chat-message");
+          return { Component: ChatMessage };
+        },
+        ErrorBoundary: ErrorPage,
+      },
     ],
+    ErrorBoundary: ErrorPage,
   },
   {
     loader: () => emailLoader("/signup"),
-    children: [
-      {
-        path: "verify-otp",
-        lazy: async () => {
-          const { VerifyOtp } = await import("../app/private/verify-otp");
-          return { Component: VerifyOtp };
-        },
-        ErrorBoundary: ErrorPage,
-      },
-    ],
+    path: "verify-otp",
+    lazy: async () => {
+      const { VerifyOtp } = await import("../app/private/verify-otp");
+      return { Component: VerifyOtp };
+    },
+    ErrorBoundary: ErrorPage,
   },
   {
     loader: () => emailLoader("/reset-password"),
-    children: [
-      {
-        path: "reset-password-otp",
-        lazy: async () => {
-          const { ResetPasswordOTP } = await import(
-            "../app/private/reset-password-otp"
-          );
-          return { Component: ResetPasswordOTP };
-        },
-        ErrorBoundary: ErrorPage,
-      },
-    ],
+    path: "reset-password-otp",
+    lazy: async () => {
+      const { ResetPasswordOTP } =
+        await import("../app/private/reset-password-otp");
+      return { Component: ResetPasswordOTP };
+    },
+    ErrorBoundary: ErrorPage,
   },
 ]);
