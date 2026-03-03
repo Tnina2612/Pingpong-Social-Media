@@ -28,6 +28,7 @@ import { CreateChannelDto } from "./dto";
 export class ChannelController {
   constructor(private readonly channelService: ChannelService) {}
 
+  // POST /api/channels
   @ApiOperation({ summary: "Create a new channel in a server" })
   @ApiBody({ type: CreateChannelDto })
   @ApiResponse({
@@ -41,6 +42,7 @@ export class ChannelController {
     return this.channelService.create(userId, dto);
   }
 
+  // GET /api/channels/:serverId
   @ApiOperation({ summary: "Get all channels in a server" })
   @ApiParam({ name: "serverId", description: "Server ID" })
   @ApiResponse({
@@ -57,6 +59,7 @@ export class ChannelController {
     return this.channelService.findByServer(serverId, userId);
   }
 
+  // DELETE /api/channels/:channelId
   @ApiOperation({ summary: "Delete a channel" })
   @ApiParam({ name: "channelId", description: "Channel ID" })
   @ApiResponse({

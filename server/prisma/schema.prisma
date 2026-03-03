@@ -111,7 +111,6 @@ model Server {
   createdAt DateTime @default(now())
   name      String
   iconUrl   String?
-  iconPublicId String?
   owner     User     @relation(fields: [ownerId], references: [id])
   ownerId   String
 
@@ -125,7 +124,7 @@ model Channel {
   name      String
   type      ChannelType
 
-  server    Server   @relation(fields: [serverId], references: [id])
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
   serverId  String
 
   messages  Message[]
@@ -141,7 +140,7 @@ model Member {
   user      User     @relation(fields: [userId], references: [id])
   userId    String
 
-  server    Server   @relation(fields: [serverId], references: [id])
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
   serverId  String
 
   roles     Role[]   @relation("MemberRoles")
@@ -156,7 +155,7 @@ model Role {
   name      String
   position  Int      @default(0) // Ascending hierarchy
 
-  server    Server   @relation(fields: [serverId], references: [id])
+  server    Server   @relation(fields: [serverId], references: [id],onDelete: Cascade)
   serverId  String
 
   members   Member[] @relation("MemberRoles")
@@ -182,13 +181,13 @@ model Message {
   deleted     Boolean  @default(false)
 
   replyToId   String?
-  replyTo     Message?  @relation("Reply", fields: [replyToId], references: [id])
+  replyTo     Message?  @relation("Reply", fields: [replyToId], references: [id],onDelete: Cascade)
   replies     Message[] @relation("Reply")
 
-  channel     Channel  @relation(fields: [channelId], references: [id])
+  channel     Channel  @relation(fields: [channelId], references: [id],onDelete: Cascade)
   channelId   String
 
-  sender      Member   @relation(fields: [memberId], references: [id])
+  sender      Member   @relation(fields: [memberId], references: [id],onDelete: Cascade)
   memberId    String
 
   @@index([channelId, createdAt])
@@ -216,15 +215,7 @@ model Attachment {
   postId    String?
 }
 
-model Attachment {
-  id        String @id @default(uuid())
-  url       String
-  publicId  String
-  type      String
 
-  message   Message @relation(fields: [messageId], references: [id])
-  messageId String
-}
 enum FriendshipStatus {
   PENDING
   ACCEPTED
