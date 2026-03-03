@@ -1,9 +1,8 @@
+import { Gamepad2, Mic, Settings, Volume2 } from "lucide-react";
 import type { FC } from "react";
-import { Mic, Settings } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { ChannelGroup } from "./ChannelGroup";
 import { ChannelItem } from "./ChannelItem";
-import { Volume2, Gamepad2 } from "lucide-react";
 
 export const Sidebar: FC = () => (
   <div className="w-56 bg-[#2f3136] flex flex-col border-r border-[#202225] shrink-0">

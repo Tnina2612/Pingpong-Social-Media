@@ -1,13 +1,13 @@
+import { Gamepad2, Plus, Users } from "lucide-react";
 import type { FC } from "react";
-import { Plus, Gamepad2, Users } from "lucide-react";
 import {
-  Sidebar,
-  MessageBubble,
   AISummaryCard,
-  DateDivider,
-  MessageInput,
-  DetailsSidebar,
   ChannelHeader,
+  DateDivider,
+  DetailsSidebar,
+  MessageBubble,
+  MessageInput,
+  Sidebar,
 } from "../../components/chat";
 
 // ─── Main ChatMessage Component ───────────────────────────────────────────────

@@ -1,5 +1,5 @@
-import type { FC } from "react";
 import { CreditCard } from "lucide-react";
+import type { FC } from "react";
 import { Avatar } from "./Avatar";
 
 export const QuickPay: FC = () => (

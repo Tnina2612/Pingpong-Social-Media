@@ -1,6 +1,5 @@
-import { HomePageHeader } from "@/components/homepage";
 import { Outlet } from "react-router-dom";
-
+import { HomePageHeader } from "@/components/homepage";
 
 export const HomeLayout = () => {
   return (

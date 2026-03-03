@@ -1,5 +1,5 @@
+import { Bell, Edit3, Hash, Search } from "lucide-react";
 import type { FC } from "react";
-import { Hash, Search, Bell, Edit3 } from "lucide-react";
 import type { ChannelHeaderProps } from "../../types/chat";
 
 export const ChannelHeader: FC<ChannelHeaderProps> = ({
