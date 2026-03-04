@@ -169,39 +169,20 @@ export class ServerService {
     return this.mapToDto(updatedServer);
   }
 
-  async remove(serverId: string, userId: string): Promise<ServerResponseDto> {
+  async remove(serverId: string, userId: string) {
     const server = await this.prisma.server.findUnique({
       where: { id: serverId },
-      include: {
-        owner: { select: { id: true, username: true, avatar: true } },
-        _count: { select: { channels: true, members: true } },
-      },
     });
 
-    if (!server) {
-      throw new NotFoundException("Server not found");
-    }
-    if (server.ownerId !== userId) {
+    if (!server) throw new NotFoundException("Server not found");
+    if (server.ownerId !== userId)
       throw new ForbiddenException("You are not the owner");
-    }
-
-    if (server.iconUrl) {
-      const iconPublicId = extractPublicIdFromUrl(server.iconUrl);
-      if (iconPublicId) {
-        await this.uploadService.deleteAttachment({
-          publicId: iconPublicId,
-          attachmentType: AttachmentType.IMAGE,
-        });
-      }
-    }
-
-    // TODO: remove also everything inside a server (channel,...)
 
     await this.prisma.server.delete({
       where: { id: serverId },
     });
 
-    return this.mapToDto(server);
+    return { message: "Server deleted successfully" };
   }
 
   async joinServer(userId: string, dto: JoinServerDto) {

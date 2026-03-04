@@ -74,4 +74,6 @@ export class ChannelController {
   }
 
   // TODO: Update channel endpoint
+
+
 }
