@@ -43,10 +43,10 @@ model Friendship {
   createdAt    DateTime @default(now())
   status       FriendshipStatus @default(PENDING)
 
-  requester    User     @relation(name: "SentRequests", fields: [requesterId], references: [id])
+  requester    User     @relation(name: "SentRequests", fields: [requesterId], references: [id], onDelete: Cascade)
   requesterId  String
 
-  receiver     User     @relation(name: "ReceivedRequests", fields: [receiverId], references: [id])
+  receiver     User     @relation(name: "ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
   receiverId   String
 
   @@unique([requesterId, receiverId]) // Prevent duplicate requests
@@ -57,7 +57,7 @@ model Post {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  author     User     @relation(fields: [authorId], references: [id])
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId   String
   
   content    String
@@ -72,9 +72,9 @@ model Comment {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  author     User      @relation(fields: [authorId], references: [id])
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId   String
-  post       Post      @relation(fields: [postId], references: [id])
+  post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId     String
  
   parentId   String?
@@ -90,12 +90,12 @@ model Like {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
 
-  post        Post?    @relation(fields: [postId], references: [id])
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId      String?
-  comment     Comment? @relation(fields: [commentId], references: [id])
+  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId   String?
   // Validation: In Like service, handle a Like to not exist for both a Post and a Comment simultaneously
   // Prisma cannot enforce "XOR" in the schema easily
@@ -181,13 +181,13 @@ model Message {
   deleted     Boolean  @default(false)
 
   replyToId   String?
-  replyTo     Message?  @relation("Reply", fields: [replyToId], references: [id],onDelete: Cascade)
+  replyTo     Message?  @relation("Reply", fields: [replyToId], references: [id])
   replies     Message[] @relation("Reply")
 
-  channel     Channel  @relation(fields: [channelId], references: [id],onDelete: Cascade)
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
   channelId   String
 
-  sender      Member   @relation(fields: [memberId], references: [id],onDelete: Cascade)
+  sender      Member   @relation(fields: [memberId], references: [id])
   memberId    String
 
   @@index([channelId, createdAt])

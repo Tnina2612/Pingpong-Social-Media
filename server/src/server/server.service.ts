@@ -178,6 +178,16 @@ export class ServerService {
     if (server.ownerId !== userId)
       throw new ForbiddenException("You are not the owner");
 
+    if (server.iconUrl) {
+      const iconPublicId = extractPublicIdFromUrl(server.iconUrl);
+      if (iconPublicId) {
+        await this.uploadService.deleteAttachment({
+          publicId: iconPublicId,
+          attachmentType: AttachmentType.IMAGE,
+        });
+      }
+    }
+
     await this.prisma.server.delete({
       where: { id: serverId },
     });
