@@ -14,7 +14,7 @@ import {
 
 export const ChatMessage: FC = () => {
   return (
-    <div className="flex h-screen bg-[#36393f] overflow-hidden">
+    <div className="flex mt-14 h-screen bg-[#36393f] overflow-hidden">
       {/* Server icon rail */}
       <div className="w-12 bg-[#202225] flex flex-col items-center py-2 gap-1.5 shrink-0">
         {[

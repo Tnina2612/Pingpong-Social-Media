@@ -6,7 +6,7 @@ export const HomeLayout = () => {
     <div className="min-h-screen bg-black">
       <HomePageHeader />
 
-      <div className="pt-20 relative">
+      <div className="relative">
         <Outlet />
       </div>
     </div>
