@@ -27,9 +27,6 @@ export const Post = ({ post }: PostProps) => {
   const authorAvatar =
     post.author?.avatar ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorName}`;
-  const isVideo = (url: string) => {
-    return /\.mp4($|\?)/i.test(url) || /\.mov($|\?)/i.test(url);
-  };
 
   const handleCommentClick = () => {
     setIsModalOpen(true);
@@ -92,11 +89,11 @@ export const Post = ({ post }: PostProps) => {
         </div>
 
         {/* Image or Video */}
-        {post.mediaUrls && post.mediaUrls.length > 0 && (
+        {post.attachments && post.attachments.length > 0 && (
           <div className="relative">
-            {isVideo(post.mediaUrls[0]) ? (
+            {post.attachments[0].type == "VIDEO" ? (
               <video
-                src={post.mediaUrls[0]}
+                src={post.attachments[0].url}
                 controls
                 className="w-full aspect-video object-cover"
               >
@@ -104,7 +101,7 @@ export const Post = ({ post }: PostProps) => {
               </video>
             ) : (
               <img
-                src={post.mediaUrls[0]}
+                src={post.attachments[0].url}
                 alt="Post media"
                 className="w-full aspect-video object-cover"
               />

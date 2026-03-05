@@ -1,7 +1,14 @@
+import type { Attachment } from "./attachment";
+
+export interface CreatePostProps {
+  content: string;
+  attachments?: Attachment[];
+}
+
 export interface PostType {
   id: string;
   content: string;
-  mediaUrls?: string[];
+  attachments?: Attachment[];
   createdAt: string;
   author: {
     id?: string;

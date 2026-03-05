@@ -2,39 +2,39 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib";
-import type { CreatePostProps, PostType, ResponseMessage } from "@/types";
+import type { CreateServerProps, ResponseMessage, ServerType } from "@/types";
 
-export const useGetAllPosts = () => {
+export const useGetAllServer = () => {
   return useQuery({
-    queryKey: ["getallposts"],
+    queryKey: ["getallservers"],
     queryFn: async () => {
-      const res = await apiClient.get("posts");
-      return res.data as PostType[];
+      const res = await apiClient.get("servers");
+      return res.data as ServerType[];
     },
   });
 };
 
-export const useGetPostById = (postId: string, enabled: boolean) => {
+export const useGetServerById = (serverId: string, enabled: boolean) => {
   return useQuery({
-    queryKey: ["getpostbyid", postId],
+    queryKey: ["getserverbyid", serverId],
     queryFn: async () => {
-      const res = await apiClient.get(`posts/${postId}`);
-      return res.data as PostType;
+      const res = await apiClient.get(`servers/${serverId}`);
+      return res.data as ServerType;
     },
     enabled,
   });
 };
 
-export const useCreatePost = () => {
+export const useCreateServer = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: CreatePostProps) => {
-      const res = await apiClient.post("posts", data);
-      return res.data as PostType;
+    mutationFn: async (data: CreateServerProps) => {
+      const res = await apiClient.post("servers", data);
+      return res.data as ServerType;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["getallposts"],
+        queryKey: ["getallservers"],
       });
     },
     onError: async (err: AxiosError) => {

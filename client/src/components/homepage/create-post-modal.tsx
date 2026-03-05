@@ -57,7 +57,7 @@ export default function CreatePostModal({ onClose }: Props) {
   const [view, setView] = useState("post");
   const [content, setContent] = useState("");
   const [audience, setAudience] = useState("Friends");
-  const [mediaList, setMediaList] = useState<UploadType[]>([]);
+  const [attachments, setAttachments] = useState<UploadType[]>([]);
 
   const { user } = useAuthUser();
   const { mutate: createPost, isPending: isCreatePostPending } =
@@ -75,7 +75,7 @@ export default function CreatePostModal({ onClose }: Props) {
         formData.append("file", file);
         uploadMedia(formData, {
           onSuccess: (data) => {
-            setMediaList((prev) => [...prev, data]);
+            setAttachments((prev) => [...prev, data]);
           },
         });
       });
@@ -83,36 +83,37 @@ export default function CreatePostModal({ onClose }: Props) {
   };
 
   const handleRemoveMedia = (indexToRemove: number) => {
-    const mediaToDelete = mediaList[indexToRemove];
+    const mediaToDelete = attachments[indexToRemove];
     if (mediaToDelete) {
       deleteMedia({ publicId: mediaToDelete.publicId });
     }
-    setMediaList((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setAttachments((prev) =>
+      prev.filter((_, index) => index !== indexToRemove),
+    );
   };
 
   const handleCloseEditingPost = () => {
     setContent("");
     setAudience("Friends");
-    const mediaListCopy = [...mediaList];
-    setMediaList([]);
+    const attachmentsCopy = [...attachments];
+    setAttachments([]);
     onClose();
-    mediaListCopy.forEach((media) => {
-      deleteMedia({ publicId: media.publicId });
+    attachmentsCopy.forEach((attachment) => {
+      deleteMedia({ publicId: attachment.publicId });
     });
   };
 
   const handleCreatePost = () => {
     if (!content.trim()) return;
 
-    const mediaUrls = mediaList.map((media) => media.url);
     createPost({
       content,
-      mediaUrls,
+      attachments: attachments,
     });
 
     setContent("");
     setAudience("Friends");
-    setMediaList([]);
+    setAttachments([]);
     onClose();
   };
 
@@ -184,23 +185,38 @@ export default function CreatePostModal({ onClose }: Props) {
             </div>
 
             {/* Uploaded Images Grid */}
-            {mediaList.length > 0 && (
+            {attachments.length > 0 && (
               <div className="mt-4 grid grid-cols-2 gap-2">
-                {mediaList.map((media, index) => (
-                  <div key={media.publicId} className="relative group">
-                    {media.type === "image" ? (
+                {attachments.map((attachment, index) => (
+                  <div key={attachment.publicId} className="relative group">
+                    {attachment.type === "IMAGE" ? (
                       <img
-                        src={media.url}
+                        src={attachment.url}
                         alt={`Upload ${index + 1}`}
                         className="w-full h-48 object-cover rounded-lg"
                       />
                     ) : (
+                      <div />
+                    )}
+                    {attachment.type === "VIDEO" ? (
                       <video
-                        src={media.url}
+                        src={attachment.url}
                         className="w-full h-48 object-cover rounded-lg"
                         controls
                         preload="metadata"
                       />
+                    ) : (
+                      <div />
+                    )}
+                    {attachment.type === "AUDIO" ? (
+                      <video
+                        src={attachment.url}
+                        className="w-full h-48 object-cover rounded-lg"
+                        controls
+                        preload="metadata"
+                      />
+                    ) : (
+                      <div />
                     )}
                     <button
                       type="button"
