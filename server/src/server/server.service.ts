@@ -9,6 +9,7 @@ import { UploadResponseDto } from "src/upload/response/upload.response";
 import { UploadService } from "src/upload/upload.service";
 import { extractPublicIdFromUrl } from "utils";
 import { CreateServerDto, JoinServerDto, UpdateServerDto } from "./dto";
+import { ServerResponseDto } from "./response";
 
 @Injectable()
 export class ServerService {
@@ -16,6 +17,23 @@ export class ServerService {
     private prisma: PrismaService,
     private uploadService: UploadService,
   ) {}
+
+  private mapToDto(server: any): ServerResponseDto {
+    return {
+      id: server.id,
+      name: server.name,
+      iconUrl: server.iconUrl,
+      owner: {
+        id: server.owner.id,
+        username: server.owner.username,
+        avatar: server.owner.avatar,
+      },
+      stats: {
+        channelCount: server._count?.channels || 0,
+        memberCount: server._count?.members || 0,
+      },
+    };
+  }
 
   async create(userId: string, dto: CreateServerDto) {
     return this.prisma.$transaction(async (tx) => {
@@ -57,27 +75,43 @@ export class ServerService {
         },
       });
 
-      return server;
+      const createdServer = await tx.server.findUnique({
+        where: { id: server.id },
+        include: {
+          owner: { select: { id: true, username: true, avatar: true } },
+          _count: { select: { channels: true, members: true } },
+        },
+      });
+
+      return this.mapToDto(createdServer);
     });
   }
 
-  async findMyServers(userId: string) {
-    return this.prisma.server.findMany({
+  async findMyServers(userId: string): Promise<ServerResponseDto[]> {
+    const servers = await this.prisma.server.findMany({
       where: {
         members: { some: { userId } },
       },
+      include: {
+        owner: { select: { id: true, username: true, avatar: true } },
+        _count: { select: { channels: true, members: true } },
+      },
     });
+
+    return servers.map((server) => this.mapToDto(server));
   }
 
-  async findOne(serverId: string, userId: string) {
+  async findOne(serverId: string, userId: string): Promise<ServerResponseDto> {
     const server = await this.prisma.server.findFirst({
       where: {
         id: serverId,
         members: { some: { userId } },
       },
       include: {
+        owner: { select: { id: true, username: true, avatar: true } },
         channels: true,
         members: true,
+        _count: { select: { channels: true, members: true } },
       },
     });
 
@@ -86,7 +120,7 @@ export class ServerService {
         "Server does not exist or you are not a member of this server",
       );
 
-    return server;
+    return this.mapToDto(server);
   }
 
   async update(
@@ -94,7 +128,7 @@ export class ServerService {
     userId: string,
     dto?: UpdateServerDto,
     file?: Express.Multer.File,
-  ) {
+  ): Promise<ServerResponseDto> {
     const server = await this.prisma.server.findUnique({
       where: { id: serverId },
     });
@@ -120,13 +154,19 @@ export class ServerService {
       uploadResult = await this.uploadService.uploadAttachment(file);
     }
 
-    return this.prisma.server.update({
+    const updatedServer = await this.prisma.server.update({
       where: { id: serverId },
       data: {
         name: dto?.name ?? server.name,
         iconUrl: uploadResult?.url ?? server.iconUrl,
       },
+      include: {
+        owner: { select: { id: true, username: true, avatar: true } },
+        _count: { select: { channels: true, members: true } },
+      },
     });
+
+    return this.mapToDto(updatedServer);
   }
 
   async remove(serverId: string, userId: string) {
@@ -134,12 +174,9 @@ export class ServerService {
       where: { id: serverId },
     });
 
-    if (!server) {
-      throw new NotFoundException("Server not found");
-    }
-    if (server.ownerId !== userId) {
+    if (!server) throw new NotFoundException("Server not found");
+    if (server.ownerId !== userId)
       throw new ForbiddenException("You are not the owner");
-    }
 
     if (server.iconUrl) {
       const iconPublicId = extractPublicIdFromUrl(server.iconUrl);
@@ -151,11 +188,11 @@ export class ServerService {
       }
     }
 
-    // TODO: remove also everything inside a server (channel,...)
-
-    return this.prisma.server.delete({
+    await this.prisma.server.delete({
       where: { id: serverId },
     });
+
+    return { message: "Server deleted successfully" };
   }
 
   async joinServer(userId: string, dto: JoinServerDto) {

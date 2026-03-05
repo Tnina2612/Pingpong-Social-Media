@@ -5,10 +5,20 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateChannelDto } from "./dto";
+import { ChannelResponseDto } from "./response";
 
 @Injectable()
 export class ChannelService {
   constructor(private prisma: PrismaService) {}
+
+  private mapToDto(channel: any): ChannelResponseDto {
+    return {
+      id: channel.id,
+      name: channel.name,
+      type: channel.type,
+      messageCount: channel._count?.messages || 0,
+    };
+  }
 
   async create(userId: string, dto: CreateChannelDto) {
     const server = await this.prisma.server.findUnique({
@@ -22,16 +32,24 @@ export class ChannelService {
       throw new ForbiddenException("Server not found or you do not own it");
     }
 
-    return this.prisma.channel.create({
+    const channel = await this.prisma.channel.create({
       data: {
         name: dto.name,
         type: dto.type,
         serverId: dto.serverId,
       },
+      include: {
+        _count: { select: { messages: true } },
+      },
     });
+
+    return this.mapToDto(channel);
   }
 
-  async findByServer(serverId: string, userId: string) {
+  async findByServer(
+    serverId: string,
+    userId: string,
+  ): Promise<ChannelResponseDto[]> {
     const server = await this.prisma.server.findFirst({
       where: {
         id: serverId,
@@ -39,6 +57,9 @@ export class ChannelService {
       },
       include: {
         channels: {
+          include: {
+            _count: { select: { messages: true } },
+          },
           orderBy: { name: "asc" },
         },
       },
@@ -48,13 +69,16 @@ export class ChannelService {
       throw new ForbiddenException("Access denied");
     }
 
-    return server.channels;
+    return server.channels.map((channel) => this.mapToDto(channel));
   }
 
   async delete(channelId: string, userId: string) {
     const channel = await this.prisma.channel.findUnique({
       where: { id: channelId },
-      include: { server: true },
+      include: {
+        server: true,
+        _count: { select: { messages: true } },
+      },
     });
 
     if (!channel) {
@@ -67,8 +91,10 @@ export class ChannelService {
       );
     }
 
-    return this.prisma.channel.delete({
+    await this.prisma.channel.delete({
       where: { id: channelId },
     });
+
+    return this.mapToDto(channel);
   }
 }

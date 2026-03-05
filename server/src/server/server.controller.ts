@@ -33,7 +33,7 @@ import { ServerService } from "./server.service";
 @UseGuards(JwtAuthGuard)
 export class ServerController {
   constructor(private readonly serverService: ServerService) {}
-
+  // POST api/servers
   @ApiOperation({
     summary: "Create a new server",
     description: "Creates a new server with optional icon",
@@ -55,6 +55,7 @@ export class ServerController {
     return this.serverService.create(userId, createServerDto);
   }
 
+  // GET api/servers
   @ApiOperation({ summary: "Get all servers of the current user" })
   @ApiResponse({
     status: 200,
@@ -76,8 +77,8 @@ export class ServerController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
-  @Get(":id")
-  findOne(@Param("id") serverId: string, @GetUser("id") userId: string) {
+  @Get(":serverId")
+  findOne(@Param("serverId") serverId: string, @GetUser("id") userId: string) {
     return this.serverService.findOne(serverId, userId);
   }
 
@@ -106,9 +107,9 @@ export class ServerController {
   @ApiResponse({ status: 400, description: "Invalid input" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
-  @Patch(":id")
+  @Patch(":serverId")
   update(
-    @Param("id") serverId: string,
+    @Param("serverId") serverId: string,
     @GetUser("id") userId: string,
     @Body() updateServerDto: UpdateServerDto,
     @UploadedFile() file?: Express.Multer.File,
@@ -126,8 +127,8 @@ export class ServerController {
   @ApiResponse({ status: 404, description: "Server not found" })
   @RequirePermission("MANAGE_SERVER")
   @UseGuards(PermissionGuard)
-  @Delete(":id")
-  remove(@Param("id") serverId: string, @GetUser("id") userId: string) {
+  @Delete(":serverId")
+  remove(@Param("serverId") serverId: string, @GetUser("id") userId: string) {
     return this.serverService.remove(serverId, userId);
   }
 
