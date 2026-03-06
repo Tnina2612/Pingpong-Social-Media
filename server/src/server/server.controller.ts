@@ -33,7 +33,8 @@ import { ServerService } from "./server.service";
 @UseGuards(JwtAuthGuard)
 export class ServerController {
   constructor(private readonly serverService: ServerService) {}
-  // POST api/servers
+
+  // POST /api/servers
   @ApiOperation({
     summary: "Create a new server",
     description: "Creates a new server with optional icon",
@@ -55,7 +56,7 @@ export class ServerController {
     return this.serverService.create(userId, createServerDto);
   }
 
-  // GET api/servers
+  // GET /api/servers
   @ApiOperation({ summary: "Get all servers of the current user" })
   @ApiResponse({
     status: 200,
@@ -69,6 +70,7 @@ export class ServerController {
 
   // TODO: Add permisson using global RBAC for a similar endpoint
   // i.e., admin can access any server
+  // GET /api/servers/:serverId
   @ApiOperation({ summary: "Get a specific server by its ID" })
   @ApiParam({ name: "id", description: "Server ID" })
   @ApiResponse({
@@ -83,6 +85,7 @@ export class ServerController {
   }
 
   // TODO: Add permisson for update also
+  // PATCH /api/servers/:serverId
   @UseInterceptors(FileInterceptor("icon"))
   @ApiOperation({ summary: "Update a server" })
   @ApiParam({ name: "id", description: "Server ID" })
@@ -117,6 +120,7 @@ export class ServerController {
     return this.serverService.update(serverId, userId, updateServerDto, file);
   }
 
+  // DELETE /api/servers/:serverId
   @ApiOperation({ summary: "Delete a server" })
   @ApiParam({ name: "id", description: "Server ID" })
   @ApiResponse({
@@ -132,6 +136,7 @@ export class ServerController {
     return this.serverService.remove(serverId, userId);
   }
 
+  // POST /api/servers/join
   @ApiOperation({ summary: "Join a server" })
   @ApiBody({ type: JoinServerDto })
   @ApiResponse({

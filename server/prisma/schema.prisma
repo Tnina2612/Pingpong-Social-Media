@@ -30,6 +30,7 @@ model User {
   posts             Post[]
   comments          Comment[]
   likes             Like[]
+  reactions         Reaction[]
 
   sentRequests      Friendship[]  @relation(name: "SentRequests")
   receivedRequests  Friendship[]  @relation(name: "ReceivedRequests")
@@ -87,6 +88,7 @@ model Comment {
 }
 
 model Like {
+  // For Post and Comment
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
 
@@ -104,6 +106,20 @@ model Like {
 
   @@unique([postId, userId]) // Prevent duplicate likes
   @@unique([commentId, userId])
+}
+
+model Reaction {
+  // For Message
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+
+  message     Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId   String?
+
+  @@unique([messageId, userId]) // Prevent duplicate reactions
 }
 
 model Server {
@@ -178,6 +194,7 @@ model Message {
 
   content     String?
   attachments Attachment[]
+  reactions   Reaction[]
   deleted     Boolean  @default(false)
 
   replyToId   String?
