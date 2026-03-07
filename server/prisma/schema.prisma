@@ -30,7 +30,7 @@ model User {
   posts             Post[]
   comments          Comment[]
   likes             Like[]
-  reactions         Reaction[]
+  reactions         ReactionUser[]
 
   sentRequests      Friendship[]  @relation(name: "SentRequests")
   receivedRequests  Friendship[]  @relation(name: "ReceivedRequests")
@@ -108,18 +108,31 @@ model Like {
   @@unique([commentId, userId])
 }
 
-model Reaction {
-  // For Message
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
+model ReactionGroup {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
+  icon      String
+  count     Int      @default(0)
 
-  message     Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  messageId   String?
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  @@unique([messageId, userId]) // Prevent duplicate reactions
+  users     ReactionUser[]
+
+  @@unique([messageId, icon])
+  @@index([messageId])
+}
+
+model ReactionUser {
+  id         String @id @default(uuid())
+  userId     String
+  reactionId String
+
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reaction   ReactionGroup @relation(fields: [reactionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reactionId])
 }
 
 model Server {
@@ -194,7 +207,7 @@ model Message {
 
   content     String?
   attachments Attachment[]
-  reactions   Reaction[]
+  reactions   ReactionGroup[]
   deleted     Boolean  @default(false)
 
   replyToId   String?
