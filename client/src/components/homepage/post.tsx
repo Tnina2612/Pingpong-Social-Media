@@ -91,7 +91,7 @@ export const Post = ({ post }: PostProps) => {
         {/* Image or Video */}
         {post.attachments && post.attachments.length > 0 && (
           <div className="relative">
-            {post.attachments[0].type == "VIDEO" ? (
+            {post.attachments[0].type === "VIDEO" ? (
               <video
                 src={post.attachments[0].url}
                 controls

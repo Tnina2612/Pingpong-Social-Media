@@ -16,7 +16,7 @@ import React, { useState } from "react";
 import { useAuthUser } from "@/hooks";
 import { useCreatePost } from "@/services/homepage";
 import { useDeleteMedia, useUploadMedia } from "@/services/homepage/upload";
-import type { UploadType } from "@/types/upload";
+import type { UploadType } from "@/types";
 
 const iconMap: Record<string, LucideIcon> = {
   Public: Globe,
@@ -108,8 +108,8 @@ export default function CreatePostModal({ onClose }: Props) {
 
     createPost({
       content,
-      attachments: attachments,
-    });
+      attachments,
+    });    
 
     setContent("");
     setAudience("Friends");

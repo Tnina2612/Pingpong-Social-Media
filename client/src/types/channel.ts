@@ -13,7 +13,8 @@ export interface CreateChannelProps {
 
 export interface Channel {
   id: string;
-  type: ChannelType;
   name: string;
+  type: ChannelType;
   serverId: string;
+  messageCount: number;
 }

@@ -2,8 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib";
-import type { ResponseMessage } from "@/types";
-import type { UploadType } from "@/types/upload";
+import type { ResponseMessage, UploadType } from "@/types";
 
 interface DeleteMediaProps {
   publicId: string;
