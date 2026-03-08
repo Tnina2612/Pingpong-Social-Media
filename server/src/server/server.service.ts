@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -37,9 +38,27 @@ export class ServerService {
 
   async create(userId: string, dto: CreateServerDto) {
     return this.prisma.$transaction(async (tx) => {
+      let iconUrl: string | null = null;
+      if (dto.iconAttachmentId) {
+        const attachment = await tx.attachment.findUnique({
+          where: { id: dto.iconAttachmentId },
+        });
+
+        if (!attachment || attachment.status !== "TEMP") {
+          throw new BadRequestException("Ivalid attachment");
+        }
+        iconUrl = attachment.url;
+        await tx.attachment.update({
+          where: { id: attachment.id },
+          data: {
+            status: "USED",
+          },
+        });
+      }
       const server = await tx.server.create({
         data: {
-          ...dto,
+          name: dto.name,
+          iconUrl,
           ownerId: userId,
         },
       });

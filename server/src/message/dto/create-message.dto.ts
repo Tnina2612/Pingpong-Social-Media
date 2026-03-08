@@ -9,7 +9,7 @@ import {
   MaxLength,
   ValidateNested,
 } from "class-validator";
-import { AttachmentPayload } from "src/posts/dto";
+import { AttachmentDto } from "src/posts/dto";
 
 export class CreateMessageDto {
   @ApiProperty({
@@ -52,5 +52,5 @@ export class CreateMessageDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => Object)
-  attachments: AttachmentPayload[];
+  attachments: AttachmentDto[];
 }

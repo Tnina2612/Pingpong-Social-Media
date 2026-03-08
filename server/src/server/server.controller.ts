@@ -48,7 +48,6 @@ export class ServerController {
   @ApiResponse({ status: 400, description: "Invalid input" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @Post()
-  @UseInterceptors(FileInterceptor("icon"))
   create(
     @GetUser("id") userId: string,
     @Body() createServerDto: CreateServerDto,

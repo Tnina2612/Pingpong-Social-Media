@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Expose, Type } from "class-transformer";
-import { AttachmentPayload } from "src/posts/dto";
+import { AttachmentDto } from "src/posts/dto";
 import { AuthorDto } from "src/users/dto";
 
 export class ReactionGroupDto {
@@ -30,7 +30,7 @@ export class MessageResponseDto {
     description: "Array of media attachments for the message",
   })
   @Expose()
-  attachments: AttachmentPayload[];
+  attachments: AttachmentDto[];
 
   replyTo?: {
     id: string;

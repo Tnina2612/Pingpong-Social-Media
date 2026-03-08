@@ -233,7 +233,7 @@ model Attachment {
   filename  String
   mimeType  String
   size      Int
-
+  status AttachmentStatus @default(TEMP)
   // Belongs to a Message (Discord side)
   message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId String?
@@ -243,6 +243,7 @@ model Attachment {
   // Belongs to a Post (Facebook side)
   post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    String?
+  @@index([status,createdAt])
 }
 
 
@@ -267,4 +268,9 @@ enum AttachmentType {
   VIDEO
   AUDIO
   FILE
+}
+
+enum AttachmentStatus {
+  TEMP 
+  USED
 }
