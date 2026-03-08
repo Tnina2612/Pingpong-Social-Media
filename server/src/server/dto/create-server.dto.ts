@@ -21,5 +21,5 @@ export class CreateServerDto {
   @IsString()
   @IsUrl()
   @IsOptional()
-  iconUrl?: string;
+  iconAttachmentId?: string;
 }

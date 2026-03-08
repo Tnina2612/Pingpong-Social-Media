@@ -1,8 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { AttachmentType } from "@prisma/client";
+import { AttachmentStatus, AttachmentType } from "@prisma/client";
 import { Expose } from "class-transformer";
 
 export class UploadResponseDto {
+  
+  @Expose()
+  id: string;
   @ApiProperty({
     description: "Public URL of the uploaded file",
     example: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
@@ -50,4 +53,12 @@ export class UploadResponseDto {
   })
   @Expose()
   size: number;
+
+  @ApiProperty({
+    description: "Attachment status",
+    enum: AttachmentStatus,
+    example: AttachmentStatus.TEMP,
+  })
+  @Expose()
+  status: AttachmentStatus;
 }

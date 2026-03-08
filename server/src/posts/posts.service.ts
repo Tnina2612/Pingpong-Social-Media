@@ -1,18 +1,20 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { CloudinaryService } from "src/cloudinary/cloudinary.service";
+
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreatePostDto } from "./dto";
 import { PostResponseDto } from "./response";
+import { UploadService } from "src/upload/upload.service";
 
 @Injectable()
 export class PostsService {
   constructor(
     private prisma: PrismaService,
-    private cloudinary: CloudinaryService,
+    private uploadService: UploadService,
   ) {}
 
   private mapToDto(post: any): PostResponseDto {
@@ -58,24 +60,36 @@ export class PostsService {
 
   async create(userId: string, dto: CreatePostDto) {
     // Format attachments for Prisma
-    const attachmentsData =
-      dto.attachments?.map((att) => ({
-        url: att.url,
-        publicId: att.publicId,
-        type: att.type,
-        filename: att.filename,
-        mimeType: att.mimeType,
-        size: att.size,
-      })) || [];
-
-    return this.prisma.post.create({
-      data: {
-        content: dto.content,
-        authorId: userId,
-        attachments: {
-          create: attachmentsData,
+    return this.prisma.$transaction(async (tx) => {
+      const post = await tx.post.create({
+        data: {
+          content: dto.content,
+          authorId: userId,
         },
-      },
+      });
+
+      if (dto.attachmentIds?.length) {
+        const attachments = await tx.attachment.findMany({
+          where: {
+            id: { in: dto.attachmentIds },
+            status: "TEMP",
+          },
+        });
+
+        if (attachments.length !== dto.attachmentIds.length) {
+          throw new BadRequestException("Invalid attachment ids");
+        }
+        await tx.attachment.updateMany({
+          where: {
+            id: { in: dto.attachmentIds },
+          },
+          data: {
+            postId: post.id,
+            status: "USED",
+          },
+        });
+        return { message: "Create post successfully" };
+      }
     });
   }
 
@@ -122,7 +136,14 @@ export class PostsService {
           resourceType = "video";
 
         // Delete using the exact publicId
-        await this.cloudinary.deleteFile(attachment.publicId, resourceType);
+        await Promise.all(
+          post.attachments.map((att) => {
+            return this.uploadService.deleteAttachment({
+              publicId: att.publicId,
+              attachmentType: att.type,
+            });
+          }),
+        );
       }
     }
 
