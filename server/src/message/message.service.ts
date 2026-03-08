@@ -6,6 +6,7 @@ import {
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateMessageDto } from "./dto";
 import { MessageGateway } from "./message.gateway";
+import { MessageResponseDto } from "./response";
 
 @Injectable()
 export class MessageService {
@@ -13,6 +14,24 @@ export class MessageService {
     private prisma: PrismaService,
     private messageGateway: MessageGateway,
   ) {}
+
+  private mapToDto(msg: any): MessageResponseDto {
+    return {
+      id: msg.id,
+      content: msg?.content,
+      attachments: msg.attachments,
+      reactions: msg.reactions,
+      replyTo: {
+        id: msg.replyTo.id,
+        content: msg.replyTo.content,
+      },
+      sender: {
+        id: msg.sender.id,
+        avatar: msg.sender.avatar,
+        username: msg.sender.username,
+      },
+    };
+  }
 
   async create(userId: string, dto: CreateMessageDto) {
     const channel = await this.prisma.channel.findUnique({
@@ -97,7 +116,11 @@ export class MessageService {
     });
   }
 
-  async findByChannel(userId: string, channelId: string, cursor?: string) {
+  async findByChannel(
+    userId: string,
+    channelId: string,
+    cursor?: string,
+  ): Promise<MessageResponseDto[]> {
     const channel = await this.prisma.channel.findUnique({
       where: { id: channelId },
     });
@@ -119,18 +142,44 @@ export class MessageService {
       throw new ForbiddenException("Not a member");
     }
 
-    return this.prisma.message.findMany({
+    const messages = await this.prisma.message.findMany({
       where: { channelId },
       take: 20,
       ...(cursor && { skip: 1, cursor: { id: cursor } }),
-      orderBy: { createdAt: "desc" },
-      include: {
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        content: true,
         attachments: true,
         sender: {
-          include: { user: true },
+          select: {
+            user: {
+              select: { id: true, username: true, avatar: true },
+            },
+          },
         },
-        replyTo: true,
+        replyTo: {
+          select: {
+            id: true,
+            content: true,
+          },
+        },
+        reactions: {
+          select: {
+            icon: true,
+            count: true,
+            users: {
+              select: {
+                user: {
+                  select: { id: true, username: true, avatar: true },
+                },
+              },
+            },
+          },
+        },
       },
     });
+
+    return messages.map((msg) => this.mapToDto(msg));
   }
 }

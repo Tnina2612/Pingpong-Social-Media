@@ -1,20 +1,20 @@
+import { Gamepad2, Plus, Users } from "lucide-react";
 import type { FC } from "react";
-import { Plus, Gamepad2, Users } from "lucide-react";
 import {
-  Sidebar,
-  MessageBubble,
   AISummaryCard,
-  DateDivider,
-  MessageInput,
-  DetailsSidebar,
   ChannelHeader,
+  DateDivider,
+  DetailsSidebar,
+  MessageBubble,
+  MessageInput,
+  Sidebar,
 } from "../../components/chat";
 
 // ─── Main ChatMessage Component ───────────────────────────────────────────────
 
 export const ChatMessage: FC = () => {
   return (
-    <div className="flex h-screen bg-[#36393f] overflow-hidden">
+    <div className="flex mt-14 h-screen bg-[#36393f] overflow-hidden">
       {/* Server icon rail */}
       <div className="w-12 bg-[#202225] flex flex-col items-center py-2 gap-1.5 shrink-0">
         {[

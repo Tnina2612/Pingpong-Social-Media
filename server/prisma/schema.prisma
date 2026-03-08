@@ -30,6 +30,7 @@ model User {
   posts             Post[]
   comments          Comment[]
   likes             Like[]
+  reactions         ReactionUser[]
 
   sentRequests      Friendship[]  @relation(name: "SentRequests")
   receivedRequests  Friendship[]  @relation(name: "ReceivedRequests")
@@ -87,6 +88,7 @@ model Comment {
 }
 
 model Like {
+  // For Post and Comment
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
 
@@ -104,6 +106,33 @@ model Like {
 
   @@unique([postId, userId]) // Prevent duplicate likes
   @@unique([commentId, userId])
+}
+
+model ReactionGroup {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  icon      String
+  count     Int      @default(0)
+
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  users     ReactionUser[]
+
+  @@unique([messageId, icon])
+  @@index([messageId])
+}
+
+model ReactionUser {
+  id         String @id @default(uuid())
+  userId     String
+  reactionId String
+
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reaction   ReactionGroup @relation(fields: [reactionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reactionId])
 }
 
 model Server {
@@ -178,6 +207,7 @@ model Message {
 
   content     String?
   attachments Attachment[]
+  reactions   ReactionGroup[]
   deleted     Boolean  @default(false)
 
   replyToId   String?
@@ -203,7 +233,7 @@ model Attachment {
   filename  String
   mimeType  String
   size      Int
-
+  status AttachmentStatus @default(TEMP)
   // Belongs to a Message (Discord side)
   message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId String?
@@ -213,6 +243,7 @@ model Attachment {
   // Belongs to a Post (Facebook side)
   post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId    String?
+  @@index([status,createdAt])
 }
 
 
@@ -237,4 +268,9 @@ enum AttachmentType {
   VIDEO
   AUDIO
   FILE
+}
+
+enum AttachmentStatus {
+  TEMP 
+  USED
 }

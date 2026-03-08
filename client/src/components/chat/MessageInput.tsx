@@ -1,5 +1,5 @@
+import { Gift, Image, Plus, Smile } from "lucide-react";
 import type { FC } from "react";
-import { Plus, Gift, Image, Smile } from "lucide-react";
 
 export const MessageInput: FC = () => (
   <div className="px-4 pb-4">

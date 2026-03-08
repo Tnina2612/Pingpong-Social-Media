@@ -1,7 +1,7 @@
-import type { FC } from "react";
 import { X } from "lucide-react";
-import { QuickPay } from "./QuickPay";
+import type { FC } from "react";
 import { OnlineUser } from "./OnlineUser";
+import { QuickPay } from "./QuickPay";
 
 export const DetailsSidebar: FC = () => (
   <div className="w-60 bg-[#2f3136] border-l border-[#202225] p-4 overflow-y-auto shrink-0">

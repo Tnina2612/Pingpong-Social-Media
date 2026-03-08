@@ -6,10 +6,11 @@ import {
   ParseFilePipe,
   Post,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import {
   ApiBearerAuth,
   ApiBody,
@@ -80,6 +81,14 @@ export class UploadController {
     return this.uploadService.uploadAttachment(file);
   }
 
+  //POST api/upload/attachments
+  @Post("attachments")
+  @UseInterceptors(FilesInterceptor("files", 10))
+  async uploadFiles(@UploadedFiles() files: Express.Multer.File[]) {
+    return Promise.all(
+      files.map((file) => this.uploadService.uploadAttachment(file)),
+    );
+  }
   // DELETE /api/upload
   @ApiOperation({
     summary: "Delete media file",

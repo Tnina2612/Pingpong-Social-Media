@@ -1,5 +1,5 @@
-import type { FC } from "react";
 import { Hash, Lock } from "lucide-react";
+import type { FC } from "react";
 import type { ChannelItemProps } from "../../types/chat";
 
 export const ChannelItem: FC<ChannelItemProps> = ({

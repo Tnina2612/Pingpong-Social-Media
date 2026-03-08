@@ -1,8 +1,8 @@
 import {
-  SubLayout,
   LeftSidebar,
-  RightSidebar,
   Post,
+  RightSidebar,
+  SubLayout,
 } from "@/components/homepage";
 import { CreatePost } from "@/components/homepage/create-post";
 import { useGetAllPosts } from "@/services/homepage/post";

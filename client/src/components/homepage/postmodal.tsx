@@ -20,10 +20,7 @@ export const PostModal = ({ post, onClose }: Props) => {
   );
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
-  const totalMedias = post.mediaUrls?.length || 0;
-  const isVideo = (url: string) => {
-    return /\.mp4($|\?)/i.test(url) || /\.mov($|\?)/i.test(url);
-  };
+  const totalMedias = post.attachments?.length || 0;
 
   // Fetch root comments only
   const { data: comments = [], isLoading } = useGetCommentsByPost(
@@ -96,11 +93,11 @@ export const PostModal = ({ post, onClose }: Props) => {
       <div className="w-[90%] max-w-6xl h-[85vh] bg-[#0e1a2f] rounded-2xl overflow-hidden flex shadow-2xl border border-blue-900/30">
         {/* LEFT - MEDIA */}
         <div className="w-1/2 bg-black/40 flex items-center justify-center relative">
-          {post.mediaUrls?.length ? (
+          {post.attachments?.length ? (
             <>
-              {isVideo(post.mediaUrls[currentMediaIndex]) ? (
+              {post.attachments[currentMediaIndex].type === "VIDEO" ? (
                 <video
-                  src={post.mediaUrls[currentMediaIndex]}
+                  src={post.attachments[currentMediaIndex].url}
                   controls
                   className="h-full w-full object-cover"
                 >
@@ -108,7 +105,7 @@ export const PostModal = ({ post, onClose }: Props) => {
                 </video>
               ) : (
                 <img
-                  src={post.mediaUrls[currentMediaIndex]}
+                  src={post.attachments[currentMediaIndex].url}
                   alt={`post image ${currentMediaIndex + 1}`}
                   className="h-full w-full object-cover"
                 />

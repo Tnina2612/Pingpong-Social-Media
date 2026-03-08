@@ -18,6 +18,7 @@ import { MessageService } from "./message.service";
 @UseGuards(JwtAuthGuard)
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
+  
   // POST /api/messages
   @ApiOperation({
     summary: "Create a new message",

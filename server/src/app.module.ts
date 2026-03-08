@@ -16,13 +16,14 @@ import { SampleModule } from "./sample/sample.module";
 import { ServerModule } from "./server/server.module";
 import { UploadModule } from "./upload/upload.module";
 import { UsersModule } from "./users/users.module";
-
+import { ScheduleModule } from "@nestjs/schedule";
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: [".env", ".env.local"],
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     SampleModule,
     AuthModule,
     PrismaModule,
