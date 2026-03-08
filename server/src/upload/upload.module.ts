@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
 import { CloudinaryModule } from "../cloudinary/cloudinary.module";
+import { AttachmentCleanupService } from "./cleanup.service";
 import { UploadController } from "./upload.controller";
 import { UploadService } from "./upload.service";
-import { AttachmentCleanupService } from "./cleanup.service";
 
 @Module({
   imports: [CloudinaryModule],

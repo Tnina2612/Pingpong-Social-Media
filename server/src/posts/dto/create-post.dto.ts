@@ -1,6 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { AttachmentType } from "@prisma/client";
-import { Type } from "class-transformer";
 import {
   IsArray,
   IsEnum,
@@ -8,7 +7,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  ValidateNested,
 } from "class-validator";
 
 export class AttachmentDto {
@@ -41,13 +39,15 @@ export class CreatePostDto {
   @ApiProperty({
     description: "Content of the post",
     example: "Just shared an amazing photo from my vacation!",
+    required: true,
+    type: String,
   })
   @IsString()
   @IsNotEmpty({ message: "Content cannot be empty" })
   content: string;
 
   @ApiProperty({
-    description: "Array of attachment ids for the post",
+    description: "Array of attachment IDs for the post",
     required: false,
     type: [String],
   })

@@ -1,5 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
 import {
   IsArray,
   IsNotEmpty,
@@ -7,7 +6,6 @@ import {
   IsString,
   IsUUID,
   MaxLength,
-  ValidateNested,
 } from "class-validator";
 import { AttachmentDto } from "src/posts/dto";
 
@@ -50,7 +48,5 @@ export class CreateMessageDto {
   })
   @IsArray()
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => Object)
   attachments: AttachmentDto[];
 }

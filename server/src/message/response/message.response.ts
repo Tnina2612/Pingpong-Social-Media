@@ -19,6 +19,22 @@ export class MessageResponseDto {
   id: string;
 
   @ApiProperty({
+    description: "Date and time when the message was sent",
+    example: "2026-03-07T10:30:00Z",
+    type: Date,
+  })
+  @Expose()
+  createdAt: Date;
+
+  @ApiProperty({
+    description: "Whether the message has been deleted",
+    example: false,
+    type: Boolean,
+  })
+  @Expose()
+  deleted: boolean;
+
+  @ApiProperty({
     description: "Content of the message",
     example: "Just shared an amazing photo from my vacation!",
     type: String,
@@ -32,10 +48,16 @@ export class MessageResponseDto {
   @Expose()
   attachments: AttachmentDto[];
 
+  @ApiProperty({
+    description: "The message being replied to",
+    required: false,
+    nullable: true,
+  })
+  @Expose()
   replyTo?: {
     id: string;
-    content: string;
-  }
+    content?: string;
+  };
 
   @ApiProperty({
     description: "Sender of the message",

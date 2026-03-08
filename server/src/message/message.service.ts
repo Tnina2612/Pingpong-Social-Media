@@ -18,6 +18,8 @@ export class MessageService {
   private mapToDto(msg: any): MessageResponseDto {
     return {
       id: msg.id,
+      createdAt: msg.createdAt,
+      deleted: msg.deleted,
       content: msg?.content,
       attachments: msg.attachments,
       reactions: msg.reactions,
@@ -149,6 +151,8 @@ export class MessageService {
       orderBy: { createdAt: "asc" },
       select: {
         id: true,
+        createdAt: true,
+        deleted: true,
         content: true,
         attachments: true,
         sender: {

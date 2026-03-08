@@ -4,11 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-
 import { PrismaService } from "src/prisma/prisma.service";
+import { UploadService } from "src/upload/upload.service";
 import { CreatePostDto } from "./dto";
 import { PostResponseDto } from "./response";
-import { UploadService } from "src/upload/upload.service";
 
 @Injectable()
 export class PostsService {
@@ -128,23 +127,15 @@ export class PostsService {
       throw new ForbiddenException("Not authorized");
 
     if (post.attachments && post.attachments.length > 0) {
-      for (const attachment of post.attachments) {
-        // Map database Enum to Cloudinary resource_type
-        let resourceType: "image" | "video" | "raw" = "image";
-        if (attachment.type === "FILE") resourceType = "raw";
-        if (attachment.type === "VIDEO" || attachment.type === "AUDIO")
-          resourceType = "video";
-
-        // Delete using the exact publicId
-        await Promise.all(
-          post.attachments.map((att) => {
-            return this.uploadService.deleteAttachment({
-              publicId: att.publicId,
-              attachmentType: att.type,
-            });
-          }),
-        );
-      }
+      // Delete using the exact publicId
+      await Promise.all(
+        post.attachments.map((att) => {
+          return this.uploadService.deleteAttachment({
+            publicId: att.publicId,
+            attachmentType: att.type,
+          });
+        }),
+      );
     }
 
     await this.prisma.post.delete({

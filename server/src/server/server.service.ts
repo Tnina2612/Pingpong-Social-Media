@@ -45,8 +45,9 @@ export class ServerService {
         });
 
         if (!attachment || attachment.status !== "TEMP") {
-          throw new BadRequestException("Ivalid attachment");
+          throw new BadRequestException("Invalid attachment");
         }
+
         iconUrl = attachment.url;
         await tx.attachment.update({
           where: { id: attachment.id },
@@ -55,6 +56,7 @@ export class ServerService {
           },
         });
       }
+      
       const server = await tx.server.create({
         data: {
           name: dto.name,
