@@ -6,7 +6,6 @@ import {
 } from "@nestjs/common";
 import { AttachmentType } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
-import { UploadResponseDto } from "src/upload/response/upload.response";
 import { UploadService } from "src/upload/upload.service";
 import { extractPublicIdFromUrl } from "utils";
 import { CreateServerDto, JoinServerDto, UpdateServerDto } from "./dto";
@@ -45,7 +44,7 @@ export class ServerService {
         });
 
         if (!attachment || attachment.status !== "TEMP") {
-          throw new BadRequestException("Ivalid attachment");
+          throw new BadRequestException("Invalid attachment");
         }
         iconUrl = attachment.url;
         await tx.attachment.update({
@@ -145,47 +144,52 @@ export class ServerService {
   async update(
     serverId: string,
     userId: string,
-    dto?: UpdateServerDto,
-    file?: Express.Multer.File,
+    dto: UpdateServerDto,
   ): Promise<ServerResponseDto> {
-    const server = await this.prisma.server.findUnique({
-      where: { id: serverId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const server = await tx.server.findUnique({
+        where: { id: serverId },
+      });
 
-    if (!server) {
-      throw new NotFoundException("Server not found");
-    }
-    if (server.ownerId !== userId) {
-      throw new ForbiddenException("You are not the owner");
-    }
-
-    let uploadResult: UploadResponseDto | null = null;
-    if (file) {
-      if (server.iconUrl) {
-        const iconPublicId = extractPublicIdFromUrl(server.iconUrl);
-        if (iconPublicId) {
-          await this.uploadService.deleteAttachment({
-            publicId: iconPublicId,
-            attachmentType: AttachmentType.IMAGE,
-          });
-        }
+      if (!server) {
+        throw new NotFoundException("Server not found");
       }
-      uploadResult = await this.uploadService.uploadAttachment(file);
-    }
+      if (server.ownerId !== userId) {
+        throw new ForbiddenException("You are not the owner");
+      }
 
-    const updatedServer = await this.prisma.server.update({
-      where: { id: serverId },
-      data: {
-        name: dto?.name ?? server.name,
-        iconUrl: uploadResult?.url ?? server.iconUrl,
-      },
-      include: {
-        owner: { select: { id: true, username: true, avatar: true } },
-        _count: { select: { channels: true, members: true } },
-      },
+      let newIconUrl: string | null = null;
+      if (dto.iconAttachmentId) {
+        const attachment = await tx.attachment.findUnique({
+          where: { id: dto.iconAttachmentId },
+        });
+
+        if (!attachment || attachment.status !== "TEMP") {
+          throw new BadRequestException("Invalid attachment");
+        }
+        newIconUrl = attachment.url;
+        await tx.attachment.update({
+          where: { id: attachment.id },
+          data: {
+            status: "USED",
+          },
+        });
+      }
+
+      const updatedServer = await tx.server.update({
+        where: { id: serverId },
+        data: {
+          name: dto?.name ?? server.name,
+          iconUrl: newIconUrl ?? server.iconUrl,
+        },
+        include: {
+          owner: { select: { id: true, username: true, avatar: true } },
+          _count: { select: { channels: true, members: true } },
+        },
+      });
+
+      return this.mapToDto(updatedServer);
     });
-
-    return this.mapToDto(updatedServer);
   }
 
   async remove(serverId: string, userId: string) {

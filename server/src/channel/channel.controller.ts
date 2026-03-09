@@ -19,7 +19,7 @@ import {
 import { GetUser } from "src/auth/decorators/get-user.decorator";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ChannelService } from "./channel.service";
-import { CreateChannelDto } from "./dto";
+import { CreateChannelDto, UpdateChannelDto } from "./dto";
 
 @ApiTags("Channels")
 @ApiBearerAuth()
@@ -73,7 +73,23 @@ export class ChannelController {
     return this.channelService.delete(channelId, userId);
   }
 
-  // TODO: Update channel endpoint
-
-
+  // PATCH /api/channels/:channelId
+  @ApiOperation({ summary: "Update a channel" })
+  @ApiParam({ name: "channelId", description: "Channel ID" })
+  @ApiBody({ type: UpdateChannelDto })
+  @ApiResponse({ status: 200, description: "Channel updated successfully" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - insufficient permissions",
+  })
+  @ApiResponse({ status: 404, description: "Channel not found" })
+  @Patch(":channelId")
+  update(
+    @Param("channelId") channelId: string,
+    @GetUser("id") userId: string,
+    @Body() updateChannelDto: UpdateChannelDto,
+  ) {
+    return this.channelService.update(channelId, userId, updateChannelDto);
+  }
 }

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { CreateChannelDto } from "./dto";
+import { CreateChannelDto, UpdateChannelDto } from "./dto";
 import { ChannelResponseDto } from "./response";
 
 @Injectable()
@@ -96,5 +96,40 @@ export class ChannelService {
     });
 
     return this.mapToDto(channel);
+  }
+
+  async update(
+    channelId: string,
+    userId: string,
+    dto: UpdateChannelDto,
+  ): Promise<ChannelResponseDto> {
+    return this.prisma.$transaction(async (tx) => {
+      const channel = await tx.channel.findUnique({
+        where: { id: channelId },
+        include: { server: true },
+      });
+
+      if (!channel) {
+        throw new NotFoundException("Channel not found");
+      }
+
+      if (channel.server.ownerId !== userId) {
+        throw new ForbiddenException(
+          "You can not delete this channel because you are not the owner",
+        );
+      }
+
+      const updatedChannel = await tx.channel.update({
+        where: { id: channelId },
+        data: {
+          name: dto?.name ?? channel.name,
+        },
+        include: {
+          _count: { select: { messages: true } },
+        },
+      });
+
+      return this.mapToDto(updatedChannel);
+    });
   }
 }
