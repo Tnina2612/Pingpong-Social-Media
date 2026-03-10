@@ -120,7 +120,7 @@ export class MessageService {
 
       this.messageGateway.server
         .to(dto.channelId)
-        .emit("new-message", fullMessage);
+        .emit("send-message", fullMessage);
 
       return fullMessage;
     });
