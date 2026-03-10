@@ -17,6 +17,7 @@ import { useAuthUser } from "@/hooks";
 import { useCreatePost } from "@/services/homepage";
 import { useDeleteMedia, useUploadMedia } from "@/services/homepage/upload";
 import type { UploadType } from "@/types/upload";
+import type { Attachment } from "@/types";
 
 const iconMap: Record<string, LucideIcon> = {
   Public: Globe,
@@ -110,7 +111,6 @@ export default function CreatePostModal({ onClose }: Props) {
       content,
       attachments: attachments,
     });
-
     setContent("");
     setAudience("Friends");
     setAttachments([]);
