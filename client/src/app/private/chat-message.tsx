@@ -13,7 +13,7 @@ import { CreateServerModal } from "@/components/chat/create-server-modal";
 // ─── Main ChatMessage Component ───────────────────────────────────────────────
 
 export const ChatMessage: FC = () => {
-  const { data: allServers, isPending: isGetAllServerPending } =
+  const { data: allServers } =
     useGetAllServer();
   const [activeServer, setActiveServer] = useState<string | null>(null);
   const [isOpenCreateServer, setIsOpenCreateServer] = useState(false);
