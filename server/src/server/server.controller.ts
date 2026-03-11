@@ -8,15 +8,11 @@ import {
   Param,
   Patch,
   Post,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -38,7 +34,6 @@ export class ServerController {
     summary: "Create a new server",
     description: "Creates a new server with optional icon",
   })
-  @ApiConsumes("multipart/form-data")
   @ApiBody({ type: CreateServerDto })
   @ApiResponse({
     status: 201,
@@ -83,23 +78,8 @@ export class ServerController {
   }
 
   // PATCH /api/servers/:serverId
-  @UseInterceptors(FileInterceptor("icon"))
   @ApiOperation({ summary: "Update a server" })
   @ApiParam({ name: "id", description: "Server ID" })
-  @ApiConsumes("multipart/form-data")
-  @ApiBody({
-    description: "Update server with optional new icon",
-    schema: {
-      type: "object",
-      properties: {
-        name: { type: "string" },
-        icon: {
-          type: "string",
-          format: "binary",
-        },
-      },
-    },
-  })
   @ApiResponse({
     status: 200,
     description: "Server updated successfully",
@@ -113,9 +93,8 @@ export class ServerController {
     @Param("serverId") serverId: string,
     @GetUser("id") userId: string,
     @Body() updateServerDto: UpdateServerDto,
-    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.serverService.update(serverId, userId, updateServerDto, file);
+    return this.serverService.update(serverId, userId, updateServerDto);
   }
 
   // DELETE /api/servers/:serverId

@@ -1,5 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Type } from "class-transformer";
 import {
   IsArray,
   IsNotEmpty,
@@ -7,9 +6,7 @@ import {
   IsString,
   IsUUID,
   MaxLength,
-  ValidateNested,
 } from "class-validator";
-import { AttachmentDto } from "src/posts/dto";
 
 export class CreateMessageDto {
   @ApiProperty({
@@ -45,12 +42,11 @@ export class CreateMessageDto {
   replyToId?: string;
 
   @ApiProperty({
-    description: "Array of attachments for the message",
+    description: "Array of attachment ids for the message",
     required: false,
+    type: [String],
   })
-  @IsArray()
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => Object)
-  attachments: AttachmentDto[];
+  @IsArray()
+  attachmentIds?: string[];
 }
