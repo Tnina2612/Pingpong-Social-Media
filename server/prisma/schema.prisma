@@ -172,7 +172,7 @@ model Member {
   server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
   serverId  String
 
-  roles     Role[]   @relation("MemberRoles")
+  roles     Role[]
   messages  Message[]
 
   @@unique([userId, serverId]) // User can only be in a server once
@@ -182,22 +182,15 @@ model Role {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   name      String
-  position  Int      @default(0) // Ascending hierarchy
+  color     String
+  permissions Int    // Bitmask integer
 
   server    Server   @relation(fields: [serverId], references: [id],onDelete: Cascade)
   serverId  String
 
-  members   Member[] @relation("MemberRoles")
-  permissions Permission[] @relation("RolePermissions")
+  members   Member[]
 
   @@unique([name,serverId])
-}
-
-model Permission {
-  id        String   @id @default(uuid())
-  code      String   @unique()
-
-  roles     Role[]   @relation("RolePermissions")
 }
 
 model Message {
