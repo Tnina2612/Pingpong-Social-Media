@@ -19,7 +19,6 @@ export class CreateServerDto {
     required: false,
   })
   @IsString()
-  @IsUrl()
   @IsOptional()
   iconAttachmentId?: string;
 }
