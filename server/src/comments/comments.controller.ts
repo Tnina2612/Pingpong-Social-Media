@@ -1,3 +1,4 @@
+import { GetUser } from "@libs/common/decorators";
 import {
   Body,
   Controller,
@@ -16,10 +17,9 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { GetUser } from "src/auth/decorators/get-user.decorator";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/guards";
 import { CommentsService } from "./comments.service";
-import { CreateCommentDto } from "./dto/create-comment.dto";
+import { CreateCommentDto } from "./dto";
 import { CommentResponseDto } from "./response";
 
 @ApiTags("Comments")

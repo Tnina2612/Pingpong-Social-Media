@@ -1,3 +1,4 @@
+import { REQUIRE_PERMISSION_KEY } from "@libs/common/decorators";
 import { ServerPermission } from "@libs/common/enums";
 import {
   CanActivate,
@@ -7,7 +8,6 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PrismaService } from "src/prisma/prisma.service";
-import { REQUIRE_PERMISSION_KEY } from "../../../libs/common/decorators/require-permission.decorator";
 
 @Injectable()
 export class ServerPermissionGuard implements CanActivate {

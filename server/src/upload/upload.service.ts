@@ -1,13 +1,20 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { AttachmentStatus, AttachmentType } from "@prisma/client";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
+import { PrismaService } from "src/prisma/prisma.service";
 import { DeleteAttachmentDto } from "./dto";
 import { UploadResponseDto } from "./response";
-import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class UploadService {
-  constructor(private readonly cloudinaryService: CloudinaryService, private readonly prisma : PrismaService) {}
+  constructor(
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async uploadAttachment(
     file: Express.Multer.File,
@@ -25,27 +32,27 @@ export class UploadService {
         attachmentType = AttachmentType.AUDIO;
 
       const attachment = await this.prisma.attachment.create({
-      data: {
-        url: result.secure_url,
-        publicId: result.public_id,
-        type: attachmentType,
-        filename: file.originalname,
-        mimeType: file.mimetype,
-        size: file.size,
-        status: AttachmentStatus.TEMP,
-      },
-    });
+        data: {
+          url: result.secure_url,
+          publicId: result.public_id,
+          type: attachmentType,
+          filename: file.originalname,
+          mimeType: file.mimetype,
+          size: file.size,
+          status: AttachmentStatus.TEMP,
+        },
+      });
 
-    return {
-      id: attachment.id,
-      url: attachment.url,
-      publicId: attachment.publicId,
-      type: attachment.type,
-      filename: attachment.filename,
-      mimeType: attachment.mimeType,
-      size: attachment.size,
-      status : attachment.status
-    };
+      return {
+        id: attachment.id,
+        url: attachment.url,
+        publicId: attachment.publicId,
+        type: attachment.type,
+        filename: attachment.filename,
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+        status: attachment.status,
+      };
     } catch (error) {
       throw new InternalServerErrorException("Failed to upload media");
     }

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { GetUser } from "@libs/common/decorators";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiBody,
@@ -7,8 +16,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { GetUser } from "src/auth/decorators/get-user.decorator";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/guards";
 import { CreateMessageDto } from "./dto";
 import { MessageService } from "./message.service";
 
@@ -18,7 +26,7 @@ import { MessageService } from "./message.service";
 @UseGuards(JwtAuthGuard)
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
-  
+
   // POST /api/messages
   @ApiOperation({
     summary: "Create a new message",

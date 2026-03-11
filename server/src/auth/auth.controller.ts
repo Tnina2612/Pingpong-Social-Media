@@ -1,3 +1,4 @@
+import { GetUser } from "@libs/common/decorators";
 import {
   Body,
   Controller,
@@ -12,7 +13,6 @@ import { ConfigService } from "@nestjs/config";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
-import { GetUser } from "./decorators/get-user.decorator";
 import {
   EmailDto,
   LoginDto,
@@ -20,8 +20,7 @@ import {
   ResetPasswordDto,
   VerifyOtpDto,
 } from "./dto";
-import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { RefreshGuard } from "./guards/refresh.guard";
+import { JwtAuthGuard, RefreshGuard } from "./guards";
 
 @ApiTags("Authentication")
 @Controller("auth")
