@@ -79,6 +79,7 @@ export class PostsService {
         if (attachments.length !== dto.attachmentIds.length) {
           throw new BadRequestException("Invalid attachment ids");
         }
+
         await tx.attachment.updateMany({
           where: {
             id: { in: dto.attachmentIds },
@@ -88,6 +89,7 @@ export class PostsService {
             status: "USED",
           },
         });
+        
         return { message: "Create post successfully" };
       }
     });
