@@ -16,6 +16,40 @@ export class ServerPermissionGuard implements CanActivate {
     private prisma: PrismaService,
   ) {}
 
+  /**
+   * Resolve serverId from params/body directly, or by looking up
+   * the parent entity when only channelId or messageId is available.
+   */
+  private async resolveServerId(request: any): Promise<string | null> {
+    const { params, body } = request;
+
+    // Direct serverId
+    const serverId = params?.serverId || body?.serverId;
+    if (serverId) return serverId;
+
+    // Resolve from channelId
+    const channelId = params?.channelId || body?.channelId;
+    if (channelId) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        select: { serverId: true },
+      });
+      return channel?.serverId ?? null;
+    }
+
+    // Resolve from messageId
+    const messageId = params?.messageId || body?.messageId;
+    if (messageId) {
+      const message = await this.prisma.message.findUnique({
+        where: { id: messageId },
+        select: { channel: { select: { serverId: true } } },
+      });
+      return message?.channel?.serverId ?? null;
+    }
+
+    return null;
+  }
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. Get the required permissions for this route
     const requiredPermissions = this.reflector.getAllAndOverride<
@@ -28,7 +62,7 @@ export class ServerPermissionGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    const serverId = request.params.serverId || request.body.serverId;
+    const serverId = await this.resolveServerId(request);
 
     if (!user || !serverId) {
       throw new ForbiddenException("Missing user or server context");
