@@ -1,3 +1,4 @@
+import { ServerPermission } from "@libs/common/enums";
 import {
   BadRequestException,
   ForbiddenException,
@@ -54,6 +55,7 @@ export class ServerService {
           },
         });
       }
+
       const server = await tx.server.create({
         data: {
           name: dto.name,
@@ -62,24 +64,21 @@ export class ServerService {
         },
       });
 
-      const permissions = await tx.permission.findMany();
-
       const ownerRole = await tx.role.create({
         data: {
-          name: "OWNER",
-          position: 100,
+          name: "Administrator",
+          color: "#3498db",
           serverId: server.id,
-          permissions: {
-            connect: permissions.map((p) => ({ id: p.id })),
-          },
+          permissions: ServerPermission.ADMINISTRATOR,
         },
       });
 
       const everyoneRole = await tx.role.create({
         data: {
-          name: "EVERYONE",
-          position: 0,
+          name: "Everyone",
+          color: "#3498db",
           serverId: server.id,
+          permissions: ServerPermission.SEND_MESSAGES,
         },
       });
 
