@@ -19,9 +19,9 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/guards";
 import { DeleteAttachmentDto } from "./dto";
-import { UploadResponseDto } from "./response/upload.response";
+import { UploadResponseDto } from "./response";
 import { UploadService } from "./upload.service";
 
 @ApiTags("Media Uploading")

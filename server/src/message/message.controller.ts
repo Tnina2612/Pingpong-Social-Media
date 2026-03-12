@@ -1,3 +1,5 @@
+import { GetUser, RequirePermission } from "@libs/common/decorators";
+import { ServerPermission } from "@libs/common/enums";
 import {
   Body,
   Controller,
@@ -18,15 +20,14 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { GetUser } from "src/auth/decorators/get-user.decorator";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard, ServerPermissionGuard } from "src/auth/guards";
 import { CreateMessageDto, UpdateMessageDto } from "./dto";
 import { MessageService } from "./message.service";
 
 @ApiTags("Messages")
 @ApiBearerAuth()
 @Controller("messages")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ServerPermissionGuard)
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
@@ -44,6 +45,7 @@ export class MessageController {
   @ApiResponse({ status: 400, description: "Invalid input" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Channel not found" })
+  @RequirePermission(ServerPermission.SEND_MESSAGES)
   @Post()
   async create(@GetUser("id") userId: string, @Body() dto: CreateMessageDto) {
     return this.messageService.create(userId, dto);

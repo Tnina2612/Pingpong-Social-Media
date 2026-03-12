@@ -1,3 +1,4 @@
+import { GetUser } from "@libs/common/decorators";
 import {
   Body,
   Controller,
@@ -16,8 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { GetUser } from "src/auth/decorators/get-user.decorator";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "src/auth/guards";
 import { ChannelService } from "./channel.service";
 import { CreateChannelDto, UpdateChannelDto } from "./dto";
 

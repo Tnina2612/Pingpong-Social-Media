@@ -1,3 +1,5 @@
+import { GetUser, RequirePermission } from "@libs/common/decorators";
+import { ServerPermission } from "@libs/common/enums";
 import {
   Body,
   Controller,
@@ -16,17 +18,14 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { PermissionGuard } from "permission/permission.guard";
-import { RequirePermission } from "permission/require-permission.decorator";
-import { GetUser } from "src/auth/decorators/get-user.decorator";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard, ServerPermissionGuard } from "src/auth/guards";
 import { CreateServerDto, JoinServerDto, UpdateServerDto } from "./dto";
 import { ServerService } from "./server.service";
 
 @ApiTags("Servers")
 @ApiBearerAuth()
 @Controller("servers")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, ServerPermissionGuard)
 export class ServerController {
   constructor(private readonly serverService: ServerService) {}
 
@@ -78,7 +77,6 @@ export class ServerController {
     return this.serverService.findOne(serverId, userId);
   }
 
-  // TODO: Add permisson for update also
   // PATCH /api/servers/:serverId
   @ApiOperation({ summary: "Update a server" })
   @ApiParam({ name: "id", description: "Server ID" })
@@ -89,6 +87,7 @@ export class ServerController {
   @ApiResponse({ status: 400, description: "Invalid input" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
+  @RequirePermission(ServerPermission.MANAGE_SERVER)
   @Patch(":serverId")
   update(
     @Param("serverId") serverId: string,
@@ -107,8 +106,7 @@ export class ServerController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
-  @RequirePermission("MANAGE_SERVER")
-  @UseGuards(PermissionGuard)
+  @RequirePermission(ServerPermission.ADMINISTRATOR)
   @Delete(":serverId")
   remove(@Param("serverId") serverId: string, @GetUser("id") userId: string) {
     return this.serverService.remove(serverId, userId);

@@ -1,3 +1,6 @@
+import { RequirePermission } from "@libs/common/decorators";
+import { ServerPermission } from "@libs/common/enums";
+import { UseGuards } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import {
   ConnectedSocket,
@@ -8,7 +11,9 @@ import {
   WsException,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
+import { WsServerPermissionGuard } from "src/auth/guards";
 import { PrismaService } from "src/prisma/prisma.service";
+import type { WsJoinChannelPayload, WsLeaveChannelPayload } from "./interfaces";
 
 @WebSocketGateway({ cors: { origin: process.env.CLIENT_URL } })
 export class MessageGateway {
@@ -16,8 +21,8 @@ export class MessageGateway {
   server: Server;
 
   constructor(
-    private jwt: JwtService,
-    private prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -50,63 +55,39 @@ export class MessageGateway {
     }
   }
 
+  @UseGuards(WsServerPermissionGuard)
+  @RequirePermission(ServerPermission.SEND_MESSAGES)
   @SubscribeMessage("join-channel")
   async handleJoinChannel(
     @ConnectedSocket() client: Socket,
-    @MessageBody() channelId: string,
+    @MessageBody() data: WsJoinChannelPayload,
   ) {
     const channel = await this.prisma.channel.findUnique({
-      where: { id: channelId },
-      select: { serverId: true },
+      where: { id: data.channelId },
     });
 
     if (!channel) {
       throw new WsException("Channel not found");
     }
 
-    const member = await this.prisma.member.findUnique({
-      where: {
-        userId_serverId: {
-          userId: client.data.userId,
-          serverId: channel.serverId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new WsException("Not a member of this server");
-    }
-
-    client.join(channelId);
+    client.join(data.channelId);
   }
 
+  @UseGuards(WsServerPermissionGuard)
+  @RequirePermission(ServerPermission.SEND_MESSAGES)
   @SubscribeMessage("leave-channel")
   async handleLeaveChannel(
     @ConnectedSocket() client: Socket,
-    @MessageBody() channelId: string,
+    @MessageBody() data: WsLeaveChannelPayload,
   ) {
     const channel = await this.prisma.channel.findUnique({
-      where: { id: channelId },
-      select: { serverId: true },
+      where: { id: data.channelId },
     });
 
     if (!channel) {
       throw new WsException("Channel not found");
     }
 
-    const member = await this.prisma.member.findUnique({
-      where: {
-        userId_serverId: {
-          userId: client.data.userId,
-          serverId: channel.serverId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new WsException("Not a member of this server");
-    }
-
-    client.leave(channelId);
+    client.leave(data.channelId);
   }
 }
