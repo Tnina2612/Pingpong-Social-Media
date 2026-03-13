@@ -1,10 +1,11 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { CreateMessageDto } from "./dto";
+import { CreateMessageDto, UpdateMessageDto } from "./dto";
 import { MessageGateway } from "./message.gateway";
 import { MessageResponseDto } from "./response";
 
@@ -71,17 +72,6 @@ export class MessageService {
       }
     }
 
-    // Format attachments for Prisma
-    const attachmentsData =
-      dto.attachments?.map((att) => ({
-        url: att.url,
-        publicId: att.publicId,
-        type: att.type,
-        filename: att.filename,
-        mimeType: att.mimeType,
-        size: att.size,
-      })) || [];
-
     return this.prisma.$transaction(async (tx) => {
       const message = await tx.message.create({
         data: {
@@ -89,11 +79,31 @@ export class MessageService {
           channelId: dto.channelId,
           replyToId: dto.replyToId ?? null,
           memberId: member.id,
-          attachments: {
-            create: attachmentsData,
-          },
         },
       });
+
+      if (dto.attachmentIds?.length) {
+        const attachments = await tx.attachment.findMany({
+          where: {
+            id: { in: dto.attachmentIds },
+            status: "TEMP",
+          },
+        });
+
+        if (attachments.length !== dto.attachmentIds.length) {
+          throw new BadRequestException("Invalid attachment ids");
+        }
+
+        await tx.attachment.updateMany({
+          where: {
+            id: { in: dto.attachmentIds },
+          },
+          data: {
+            messageId: message.id,
+            status: "USED",
+          },
+        });
+      }
 
       const fullMessage = await tx.message.findUnique({
         where: { id: message.id },
@@ -110,7 +120,7 @@ export class MessageService {
 
       this.messageGateway.server
         .to(dto.channelId)
-        .emit("new-message", fullMessage);
+        .emit("send-message", fullMessage);
 
       return fullMessage;
     });
@@ -181,5 +191,91 @@ export class MessageService {
     });
 
     return messages.map((msg) => this.mapToDto(msg));
+  }
+
+  async update(
+    messageId: string,
+    userId: string,
+    dto: UpdateMessageDto,
+  ): Promise<MessageResponseDto> {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      include: { channel: true },
+    });
+
+    if (!message) {
+      throw new NotFoundException("Message not found");
+    }
+
+    const member = await this.prisma.member.findUnique({
+      where: {
+        userId_serverId: {
+          userId,
+          serverId: message.channel.serverId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException("Not a member");
+    }
+
+    if (message.memberId !== member.id) {
+      throw new ForbiddenException("Message is sent by another user");
+    }
+
+    const updatedMessage = await this.prisma.message.update({
+      where: { id: messageId },
+      data: {
+        content: dto?.content ?? message.content,
+      },
+      include: {
+        replyTo: true,
+        sender: true,
+      },
+    });
+
+    this.messageGateway.server
+      .to(message.channelId)
+      .emit("update-message", updatedMessage);
+
+    return this.mapToDto(updatedMessage);
+  }
+
+  async delete(messageId: string, userId: string) {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      include: { channel: true },
+    });
+
+    if (!message) {
+      throw new NotFoundException("Message not found");
+    }
+
+    const member = await this.prisma.member.findUnique({
+      where: {
+        userId_serverId: {
+          userId,
+          serverId: message.channel.serverId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException("Not a member");
+    }
+
+    if (message.memberId !== member.id) {
+      throw new ForbiddenException("Message is sent by another user");
+    }
+
+    await this.prisma.message.update({
+      where: { id: messageId },
+      data: { deleted: true },
+    });
+
+    this.messageGateway.server
+      .to(message.channelId)
+      .emit("delete-message", { id: messageId });
   }
 }

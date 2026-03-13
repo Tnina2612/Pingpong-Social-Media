@@ -1,3 +1,6 @@
+import { RequirePermission } from "@libs/common/decorators";
+import { ServerPermission } from "@libs/common/enums";
+import { UseGuards } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import {
   ConnectedSocket,
@@ -8,7 +11,9 @@ import {
   WsException,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
+import { WsServerPermissionGuard } from "src/auth/guards";
 import { PrismaService } from "src/prisma/prisma.service";
+import type { WsJoinChannelPayload, WsLeaveChannelPayload } from "./interfaces";
 
 @WebSocketGateway({ cors: { origin: process.env.CLIENT_URL } })
 export class MessageGateway {
@@ -16,8 +21,8 @@ export class MessageGateway {
   server: Server;
 
   constructor(
-    private jwt: JwtService,
-    private prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -31,38 +36,58 @@ export class MessageGateway {
     try {
       const payload = this.jwt.verify(token);
       client.data.userId = payload.sub;
-    } catch {
+      console.log(`User connected: ${payload.username} (${client.id})`);
+
+      // Broadcast that user came online
+      this.server.emit("userStatus", { userId: payload.sub, status: "ONLINE" });
+    } catch (error) {
       client.disconnect();
+      throw new WsException(`Connection failed: ${error.message}`);
     }
   }
 
+  handleDisconnect(client: Socket) {
+    if (client.data.userId) {
+      this.server.emit("userStatus", {
+        userId: client.data.userId,
+        status: "OFFLINE",
+      });
+    }
+  }
+
+  @UseGuards(WsServerPermissionGuard)
+  @RequirePermission(ServerPermission.SEND_MESSAGES)
   @SubscribeMessage("join-channel")
   async handleJoinChannel(
-    @MessageBody() channelId: string,
     @ConnectedSocket() client: Socket,
+    @MessageBody() data: WsJoinChannelPayload,
   ) {
     const channel = await this.prisma.channel.findUnique({
-      where: { id: channelId },
-      select: { serverId: true },
+      where: { id: data.channelId },
     });
 
     if (!channel) {
       throw new WsException("Channel not found");
     }
 
-    const member = await this.prisma.member.findUnique({
-      where: {
-        userId_serverId: {
-          userId: client.data.userId,
-          serverId: channel.serverId,
-        },
-      },
+    client.join(data.channelId);
+  }
+
+  @UseGuards(WsServerPermissionGuard)
+  @RequirePermission(ServerPermission.SEND_MESSAGES)
+  @SubscribeMessage("leave-channel")
+  async handleLeaveChannel(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: WsLeaveChannelPayload,
+  ) {
+    const channel = await this.prisma.channel.findUnique({
+      where: { id: data.channelId },
     });
 
-    if (!member) {
-      throw new WsException("Not a member of this server");
+    if (!channel) {
+      throw new WsException("Channel not found");
     }
 
-    client.join(channelId);
+    client.leave(data.channelId);
   }
 }

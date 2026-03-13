@@ -1,3 +1,5 @@
+import { GetMember, RequirePermission } from "@libs/common/decorators";
+import { ServerPermission } from "@libs/common/enums";
 import { Controller, Delete, Param, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
@@ -6,10 +8,7 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { GetMember } from "permission/get-member.decorator";
-import { PermissionGuard } from "permission/permission.guard";
-import { RequirePermission } from "permission/require-permission.decorator";
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { JwtAuthGuard, ServerPermissionGuard } from "src/auth/guards";
 import { MemberService } from "./member.service";
 
 @ApiTags("Member")
@@ -50,8 +49,8 @@ export class MemberController {
     status: 401,
     description: "Unauthorized - invalid or missing token",
   })
-  @RequirePermission("KICK_MEMBER")
-  @UseGuards(PermissionGuard)
+  @RequirePermission(ServerPermission.KICK_MEMBERS)
+  @UseGuards(ServerPermissionGuard)
   @Delete(":serverId/members/:userId")
   kickMember(
     @Param("serverId") serverId: string,
