@@ -4,11 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-
 import { PrismaService } from "src/prisma/prisma.service";
+import { UploadService } from "src/upload/upload.service";
 import { CreatePostDto } from "./dto";
 import { PostResponseDto } from "./response";
-import { UploadService } from "src/upload/upload.service";
 
 @Injectable()
 export class PostsService {
@@ -89,7 +88,7 @@ export class PostsService {
             status: "USED",
           },
         });
-        
+
         return { message: "Create post successfully" };
       }
     });

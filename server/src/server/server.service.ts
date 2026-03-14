@@ -66,7 +66,7 @@ export class ServerService {
 
       const ownerRole = await tx.role.create({
         data: {
-          name: "Administrator",
+          name: "administrator",
           color: "#3498db",
           serverId: server.id,
           permissions: ServerPermission.ADMINISTRATOR,
@@ -75,7 +75,7 @@ export class ServerService {
 
       const everyoneRole = await tx.role.create({
         data: {
-          name: "Everyone",
+          name: "everyone",
           color: "#3498db",
           serverId: server.id,
           permissions: ServerPermission.SEND_MESSAGES,
@@ -250,7 +250,7 @@ export class ServerService {
       const everyoneRole = await tx.role.findFirst({
         where: {
           serverId,
-          name: "EVERYONE",
+          name: "everyone",
         },
       });
 

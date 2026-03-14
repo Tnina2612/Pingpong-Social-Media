@@ -15,7 +15,11 @@ import { WsServerPermissionGuard } from "src/auth/guards";
 import { PrismaService } from "src/prisma/prisma.service";
 import type { WsJoinChannelPayload, WsLeaveChannelPayload } from "./interfaces";
 
-@WebSocketGateway({ cors: { origin: process.env.CLIENT_URL } })
+@WebSocketGateway({
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+  },
+})
 export class MessageGateway {
   @WebSocketServer()
   server: Server;
