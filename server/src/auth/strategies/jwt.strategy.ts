@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
+import { GlobalRole } from "@prisma/client";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { PrismaService } from "src/prisma/prisma.service";
 
@@ -16,9 +17,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
+  async validate(payload: { sub: string; email: string; role: GlobalRole }) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
     });
 
     if (!user) {
@@ -26,10 +32,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // The object returned here is automatically attached to `req.user`
-    return {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role,
-    };
+    return user;
   }
 }

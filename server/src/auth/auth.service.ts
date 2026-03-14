@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import { ForbiddenException, Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
+import { GlobalRole } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { Response } from "express";
 import Redis from "ioredis";
@@ -19,7 +20,11 @@ export class AuthService {
     @Inject("REDIS") private redis: Redis,
   ) {}
 
-  private async signToken(userId: string, userEmail: string, userRole: string) {
+  private async signToken(
+    userId: string,
+    userEmail: string,
+    userRole: GlobalRole,
+  ) {
     const payload = {
       sub: userId,
       email: userEmail,
