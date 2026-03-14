@@ -71,8 +71,12 @@ export class MessageController {
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Channel not found" })
   @Get(":channelId")
-  async findByChannel(@Param() channelId: string, @Query() cursor: string) {
-    return this.messageService.findByChannel(channelId, cursor);
+  async findByChannel(
+    @GetUser("id") userId: string,
+    @Param("channelId") channelId: string,
+    @Query("cursor") cursor: string,
+  ) {
+    return this.messageService.findByChannel(userId, channelId, cursor);
   }
 
   // PATCH /api/messages/:messageId

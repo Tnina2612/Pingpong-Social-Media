@@ -23,8 +23,8 @@ export class MessageService {
       attachments: msg.attachments,
       reactions: msg.reactions,
       replyTo: {
-        id: msg.replyTo.id,
-        content: msg.replyTo.content,
+        id: msg.replyTo?.id,
+        content: msg.replyTo?.content,
       },
       sender: {
         id: msg.sender.id,
@@ -156,7 +156,7 @@ export class MessageService {
       where: { channelId },
       take: 20,
       ...(cursor && { skip: 1, cursor: { id: cursor } }),
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         content: true,
@@ -190,7 +190,7 @@ export class MessageService {
       },
     });
 
-    return messages.map((msg) => this.mapToDto(msg));
+    return messages.map((msg) => this.mapToDto(msg)).reverse();
   }
 
   async update(
