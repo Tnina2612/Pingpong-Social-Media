@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
+import { AdminModule } from "./admin/admin.module";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
@@ -16,7 +18,7 @@ import { SampleModule } from "./sample/sample.module";
 import { ServerModule } from "./server/server.module";
 import { UploadModule } from "./upload/upload.module";
 import { UsersModule } from "./users/users.module";
-import { ScheduleModule } from "@nestjs/schedule";
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,6 +27,7 @@ import { ScheduleModule } from "@nestjs/schedule";
     }),
     ScheduleModule.forRoot(),
     SampleModule,
+    AdminModule,
     AuthModule,
     PrismaModule,
     UsersModule,
