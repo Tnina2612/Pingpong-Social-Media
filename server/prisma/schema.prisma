@@ -16,6 +16,7 @@ model User {
   id                String   @id @default(uuid())
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  role              GlobalRole @default(USER)
 
   email             String   @unique
   username          String   @unique
@@ -239,6 +240,11 @@ model Attachment {
   @@index([status,createdAt])
 }
 
+enum GlobalRole {
+  USER
+  MODERATOR     // Can delete any public post, ban users globally
+  SUPER_ADMIN   // Can do everything, including changing platform settings
+}
 
 enum FriendshipStatus {
   PENDING

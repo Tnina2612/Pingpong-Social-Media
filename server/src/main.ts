@@ -4,6 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import { AdminModule } from "./admin/admin.module";
 import { AppModule } from "./app.module";
 import { AuthModule } from "./auth/auth.module";
 import { ChannelModule } from "./channel/channel.module";
@@ -53,6 +54,7 @@ async function bootstrap() {
   const { document, tags } = setupSwagger(app, config, {
     include: [
       SampleModule,
+      AdminModule,
       AuthModule,
       PostsModule,
       CommentsModule,

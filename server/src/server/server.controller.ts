@@ -61,8 +61,6 @@ export class ServerController {
     return this.serverService.findMyServers(userId);
   }
 
-  // TODO: Add permisson using global RBAC for a similar endpoint
-  // i.e., admin can access any server
   // GET /api/servers/:serverId
   @ApiOperation({ summary: "Get a specific server by its ID" })
   @ApiParam({ name: "id", description: "Server ID" })
