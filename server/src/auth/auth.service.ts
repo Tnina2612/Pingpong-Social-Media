@@ -19,8 +19,13 @@ export class AuthService {
     @Inject("REDIS") private redis: Redis,
   ) {}
 
-  private async signToken(userId: string) {
-    const payload = { sub: userId };
+  private async signToken(userId: string, userEmail: string, userRole: string) {
+    const payload = {
+      sub: userId,
+      email: userEmail,
+      role: userRole,
+    };
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(payload),
       this.jwt.signAsync(payload, {
@@ -29,6 +34,7 @@ export class AuthService {
       }),
     ]);
     await this.updateRefreshToken(userId, refreshToken);
+
     return {
       accessToken,
       refreshToken,
@@ -92,7 +98,7 @@ export class AuthService {
       throw new ForbiddenException("Password is incorrect");
     }
 
-    const tokens = await this.signToken(user.id);
+    const tokens = await this.signToken(user.id, user.email, user.role);
     return {
       user: {
         id: user?.id,
@@ -123,7 +129,7 @@ export class AuthService {
       throw new ForbiddenException("Invalid credentials");
     }
 
-    const tokens = await this.signToken(user.id);
+    const tokens = await this.signToken(user.id, user.email, user.role);
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
       secure: this.config.get<string>("NODE_ENV") === "production",

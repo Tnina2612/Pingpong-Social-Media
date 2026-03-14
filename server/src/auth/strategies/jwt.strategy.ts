@@ -10,28 +10,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private prisma: PrismaService,
     private config: ConfigService,
   ) {
-    const jwtSecret = config.getOrThrow<string>("JWT_ACCESS_SECRET");
-
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: jwtSecret,
+      secretOrKey: config.getOrThrow<string>("JWT_ACCESS_SECRET"),
     });
   }
 
-  async validate(payload: { sub: string }) {
+  async validate(payload: { sub: string; email: string; role: string }) {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-      },
     });
 
     if (!user) {
       throw new UnauthorizedException("User not found");
     }
 
-    return user;
+    // The object returned here is automatically attached to `req.user`
+    return {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+    };
   }
 }
