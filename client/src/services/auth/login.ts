@@ -6,6 +6,7 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 import { apiClient } from "@/lib";
 import type { User } from "@/types";
 import type { ResponseMessage } from "@/types/response";
+import { useSocketStore } from "@/hooks/useSocketStore";
 
 interface LoginProps {
   email: string;
@@ -23,6 +24,7 @@ interface LoginResponse {
 
 export const useLogin = () => {
   const navigate = useNavigate();
+  const connect = useSocketStore((s) => s.connect);
   return useMutation<LoginResponse, AxiosError, LoginProps>({
     mutationFn: async (data: LoginProps) => {
       const res = await apiClient.post("/auth/login", data);
@@ -32,6 +34,7 @@ export const useLogin = () => {
       const { accessToken, user } = res;
       useAuthUser.getState().setAuthUser(user as User, accessToken);
       toast.success("Login successfully");
+      connect(accessToken);
       navigate("/homepage");
     },
     onError: async (err, variables) => {

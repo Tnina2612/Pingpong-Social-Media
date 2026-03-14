@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { User } from "./user";
 
 export type UserStatus = "online" | "idle" | "dnd" | "offline";
 
@@ -14,6 +15,7 @@ export interface ChannelItemProps {
   icon?: ReactNode;
   locked?: boolean;
   active?: boolean;
+  onClick?: () => void;
 }
 
 export interface ChannelGroupProps {
@@ -22,10 +24,14 @@ export interface ChannelGroupProps {
 }
 
 export interface MessageBubbleProps {
-  author: string;
+  author: User;
   time: string;
   content: string;
   isAI?: boolean;
+  replyto?: {
+    id: string;
+    content: string;
+  };
 }
 
 export interface DateDividerProps {
