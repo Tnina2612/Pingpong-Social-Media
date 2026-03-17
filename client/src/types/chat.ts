@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import type { User } from "./user";
+import type { Attachment } from "./attachment";
+import type { UploadType } from "./upload";
 
 export type UserStatus = "online" | "idle" | "dnd" | "offline";
 
@@ -32,6 +34,7 @@ export interface MessageBubbleProps {
     id: string;
     content: string;
   };
+  attachments?: UploadType[];
 }
 
 export interface DateDividerProps {

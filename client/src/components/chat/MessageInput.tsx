@@ -103,11 +103,11 @@ export const MessageInput = ({ channelId }: Props) => {
               key={attachment.id}
               className="relative bg-gray-700 rounded p-2 max-w-xs group"
             >
-              {attachment.type?.startsWith("image") ? (
+              {attachment.type?.startsWith("IMAGE") ? (
                 <img
                   src={attachment.url}
                   alt="preview"
-                  className="max-w-20 max-h-20 rounded"
+                  className="max-w-40 max-h-40 rounded"
                 />
               ) : (
                 <div className="text-xs text-gray-300 p-2">

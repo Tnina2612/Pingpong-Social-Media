@@ -8,6 +8,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   content,
   isAI = false,
   replyto,
+  attachments,
 }) => (
   <div
     className={`flex gap-3 px-4 py-2 transition-colors
@@ -53,6 +54,29 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
       )}
 
       <p className="text-[#dcddde] text-sm leading-relaxed">{content}</p>
+      {attachments && attachments.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {attachments.map((attachment) => (
+            <div key={attachment.id}>
+              {attachment.type === "VIDEO" ? (
+                <video
+                  src={attachment.url}
+                  controls
+                  className="w-xl aspect-video object-cover"
+                >
+                  <track kind="captions" />
+                </video>
+              ) : (
+                <img
+                  src={attachment.url}
+                  alt="message image"
+                  className="w-xl aspect-video object-cover"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   </div>
 );

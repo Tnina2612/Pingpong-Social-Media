@@ -27,9 +27,9 @@ export class MessageService {
         content: msg.replyTo?.content,
       },
       sender: {
-        id: msg.sender.id,
-        avatar: msg.sender.avatar,
-        username: msg.sender.username,
+        id: msg.sender.user.id,
+        avatar: msg.sender.user.avatar,
+        username: msg.sender.user.username,
       },
     };
   }
@@ -118,11 +118,12 @@ export class MessageService {
         },
       });
 
+      const formatMessage = this.mapToDto(fullMessage);
       this.messageGateway.server
         .to(dto.channelId)
-        .emit("send-message", fullMessage);
+        .emit("send-message", formatMessage);
 
-      return fullMessage;
+      return formatMessage;
     });
   }
 
@@ -163,8 +164,13 @@ export class MessageService {
         attachments: true,
         sender: {
           select: {
+            id: true,
             user: {
-              select: { id: true, username: true, avatar: true },
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
             },
           },
         },
@@ -231,13 +237,24 @@ export class MessageService {
       },
       include: {
         replyTo: true,
-        sender: true,
+        sender: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatar: true,
+              },
+            },
+          },
+        },
       },
     });
-
+    const formatMessage = this.mapToDto(updatedMessage);
     this.messageGateway.server
       .to(message.channelId)
-      .emit("update-message", updatedMessage);
+      .emit("update-message", formatMessage);
 
     return this.mapToDto(updatedMessage);
   }

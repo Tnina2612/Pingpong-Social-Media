@@ -1,4 +1,4 @@
-import type { Attachment } from "./attachment";
+import type { UploadType } from "./upload";
 import type { User } from "./user";
 
 export interface CreateMessageData {
@@ -11,7 +11,7 @@ export interface CreateMessageData {
 export type Message = {
   id: string;
   content?: string;
-  attachments?: Attachment[];
+  attachments?: UploadType[];
   replyto?: {
     id: string;
     content: string;
