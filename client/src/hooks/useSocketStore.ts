@@ -13,17 +13,21 @@ const SOCKET_BASE_URL =
     ? window.location.origin
     : "http://localhost:3000");
 
-const socket = io(SOCKET_BASE_URL, { autoConnect: false });
-export const useSocketStore = create<SocketStore>((set) => ({
-  socket,
-  connect: (token: string) => {
-    socket.auth = { token };
-    socket.connect();
-  },
-  disconnect: () => {
-    set((state) => {
-      state.socket?.disconnect();
-      return { socket: null };
-    });
-  },
-}));
+export const useSocketStore = create<SocketStore>((_set, get) => {
+  const socket = io(SOCKET_BASE_URL, { autoConnect: false });
+  return {
+    socket,
+    connect: (token: string) => {
+      const currentSocket = get().socket;
+      if (!currentSocket) {
+        return;
+      }
+      currentSocket.auth = { token };
+      currentSocket.connect();
+    },
+    disconnect: () => {
+      const currentSocket = get().socket;
+      currentSocket?.disconnect();
+    },
+  };
+});
