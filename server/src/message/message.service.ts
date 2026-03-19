@@ -24,6 +24,7 @@ export class MessageService {
       reactions: msg.reactions,
       replyTo: {
         id: msg.replyTo?.id,
+        username: msg.replyTo?.sender?.user?.username ?? "Unknown",
         content: msg.replyTo?.content,
       },
       sender: {
@@ -31,6 +32,7 @@ export class MessageService {
         avatar: msg.sender.user.avatar,
         username: msg.sender.user.username,
       },
+      createdAt: msg.createdAt,
     };
   }
 
@@ -112,8 +114,21 @@ export class MessageService {
           sender: {
             include: { user: true },
           },
+
           replyTo: {
-            select: { id: true, content: true },
+            select: {
+              id: true,
+              content: true,
+              sender: {
+                select: {
+                  user: {
+                    select: {
+                      username: true,
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       });
@@ -162,6 +177,7 @@ export class MessageService {
         id: true,
         content: true,
         attachments: true,
+        createdAt: true,
         sender: {
           select: {
             id: true,
@@ -178,6 +194,15 @@ export class MessageService {
           select: {
             id: true,
             content: true,
+            sender: {
+              select: {
+                user: {
+                  select: {
+                    username: true,
+                  },
+                },
+              },
+            },
           },
         },
         reactions: {

@@ -12,9 +12,11 @@ export type Message = {
   id: string;
   content?: string;
   attachments?: UploadType[];
-  replyto?: {
+  replyTo?: {
     id: string;
+    username: string;
     content: string;
   };
   sender: User;
+  createdAt?: string;
 };

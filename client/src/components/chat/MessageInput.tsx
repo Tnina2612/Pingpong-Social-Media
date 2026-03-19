@@ -3,20 +3,28 @@ import { useUploadMedia } from "@/services/homepage/upload";
 import type { Message } from "@/types/message";
 import type { UploadType } from "@/types/upload";
 import { Gift, Image, Plus, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   channelId: string;
+  replyMsg?: Message | null; // Thêm prop
+  onReplyClear?: () => void;
 }
 
-export const MessageInput = ({ channelId }: Props) => {
+export const MessageInput = ({
+  channelId,
+  replyMsg: externalReplyMsg,
+  onReplyClear,
+}: Props) => {
   const { mutate: uploadMedia, isPending: uploadMediaPending } =
     useUploadMedia();
   const { mutate: createMessage, isPending: createMessagePending } =
     useCreateMessage();
   const [attachments, setAttachments] = useState<UploadType[]>([]);
   const [content, setContent] = useState("");
-  const [replyMsg, setReplyMsg] = useState<Message | null>(null);
+  const [replyMsg, setReplyMsg] = useState<Message | null>(
+    externalReplyMsg ?? null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,14 +69,21 @@ export const MessageInput = ({ channelId }: Props) => {
           setContent("");
           setAttachments([]);
           setReplyMsg(null);
+          onReplyClear?.();
         },
       },
     );
   };
-
+  const handleCancelReply = () => {
+    setReplyMsg(null);
+    onReplyClear?.(); // Clear parent state
+  };
   const removeAttachment = (id: string) => {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
+  useEffect(() => {
+    setReplyMsg(externalReplyMsg ?? null);
+  }, [externalReplyMsg]);
 
   return (
     <div className="px-4 pb-4">
@@ -87,7 +102,7 @@ export const MessageInput = ({ channelId }: Props) => {
             </p>
           </div>
           <button
-            onClick={() => setReplyMsg(null)}
+            onClick={handleCancelReply}
             className="text-gray-400 hover:text-gray-200 transition-colors ml-2 shrink-0"
           >
             <X size={16} />

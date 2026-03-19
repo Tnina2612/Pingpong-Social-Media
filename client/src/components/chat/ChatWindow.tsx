@@ -4,10 +4,12 @@ import { ChannelHeader } from "./ChannelHeader";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { useGetMessages } from "@/services/chat";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSocketStore } from "@/hooks/useSocketStore";
 
 import { useQueryClient } from "@tanstack/react-query";
+import type { Message } from "@/types/message";
+import { formatDate } from "@/utils";
 interface Props {
   channel?: Channel | null;
 }
@@ -19,11 +21,13 @@ export const ChatWindow = ({ channel }: Props) => {
       ?.slice()
       .reverse()
       .flatMap((page) => page) ?? [];
+
   const containerRef = useRef<HTMLDivElement>(null);
   const firstLoad = useRef(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocketStore();
   const queryClient = useQueryClient();
+  const [replyMsg, setReplyMsg] = useState<Message | null>(null);
   const loadMore = async () => {
     const container = containerRef.current;
     if (!container) return;
@@ -171,10 +175,12 @@ export const ChatWindow = ({ channel }: Props) => {
         {messages.map((msg) => (
           <MessageBubble
             key={msg.id}
+            messageId={msg.id}
             author={msg.sender}
             content={msg.content || ""}
-            time="4AM"
-            replyto={msg.replyto}
+            time={formatDate(msg.createdAt || "")}
+            replyTo={msg.replyTo}
+            onReply={setReplyMsg}
             attachments={msg.attachments}
           />
         ))}
@@ -183,7 +189,11 @@ export const ChatWindow = ({ channel }: Props) => {
         <div ref={bottomRef} />
       </div>
 
-      <MessageInput channelId={channel?.id || ""} />
+      <MessageInput
+        channelId={channel?.id || ""}
+        replyMsg={replyMsg}
+        onReplyClear={() => setReplyMsg(null)}
+      />
     </div>
   );
 };

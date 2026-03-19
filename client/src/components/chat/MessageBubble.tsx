@@ -1,17 +1,20 @@
 import type { FC } from "react";
 import type { MessageBubbleProps } from "../../types/chat";
 import { Avatar } from "./Avatar";
+import { Reply } from "lucide-react";
 
 export const MessageBubble: FC<MessageBubbleProps> = ({
+  messageId,
   author,
   time,
   content,
   isAI = false,
-  replyto,
+  replyTo,
   attachments,
+  onReply,
 }) => (
   <div
-    className={`flex gap-3 px-4 py-2 transition-colors
+    className={`flex gap-3 px-4 py-2 transition-colors group
       ${
         isAI
           ? "bg-indigo-500/8 border-l-2 border-indigo-500"
@@ -40,15 +43,16 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
       </div>
 
       {/* Reply to message quote */}
-      {replyto && (
+      {replyTo?.content && (
         <div className="mb-2 bg-gray-700/30 border-l-2 border-gray-500 pl-2 py-1 rounded">
           <p className="text-xs text-gray-400 mb-0.5">
+            Replying to{" "}
             <span className="text-blue-300 font-semibold">
-              {replyto.content}
+              {replyTo.username}
             </span>
           </p>
           <p className="text-xs text-gray-300 line-clamp-2">
-            {replyto.content}
+            {replyTo.content}
           </p>
         </div>
       )}
@@ -77,6 +81,13 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
           ))}
         </div>
       )}
+      <button
+        onClick={() => onReply?.({ id: messageId, content, sender: author })} // Gữi message data
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-400"
+        title="Reply to this message"
+      >
+        <Reply size={16} />
+      </button>
     </div>
   </div>
 );

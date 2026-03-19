@@ -1,12 +1,5 @@
 import { useState, type FC } from "react";
-import {
-  ChannelHeader,
-  DateDivider,
-  DetailsSidebar,
-  MessageBubble,
-  MessageInput,
-  Sidebar,
-} from "../../components/chat";
+import { DetailsSidebar, Sidebar } from "../../components/chat";
 import { useGetAllServer } from "@/services/chat";
 import { CreateServerModal } from "@/components/chat/create-server-modal";
 import { useChatStore } from "@/hooks/useChatStore";
