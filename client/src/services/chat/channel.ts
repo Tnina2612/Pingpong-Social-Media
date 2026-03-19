@@ -5,12 +5,18 @@ import { apiClient } from "@/lib";
 import type { Channel, CreateChannelProps, ResponseMessage } from "@/types";
 
 export const useGetAllChannel = (serverId: string) => {
+  const isEnabled = !!serverId;
+
   return useQuery({
     queryKey: ["getallchannels", serverId],
     queryFn: async () => {
-      const res = await apiClient.get(`channels/${serverId}`);
+      if (!serverId) {
+        return [] as Channel[];
+      }
+      const res = await apiClient.get(`channels/server/${serverId}`);
       return res.data as Channel[];
     },
+    enabled: isEnabled,
   });
 };
 
