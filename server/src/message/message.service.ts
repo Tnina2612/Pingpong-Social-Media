@@ -237,6 +237,8 @@ export class MessageService {
       },
       include: {
         replyTo: true,
+        attachments: true,
+        reactions: true,
         sender: {
           select: {
             id: true,
@@ -251,12 +253,13 @@ export class MessageService {
         },
       },
     });
+
     const formatMessage = this.mapToDto(updatedMessage);
     this.messageGateway.server
       .to(message.channelId)
       .emit("update-message", formatMessage);
 
-    return this.mapToDto(updatedMessage);
+    return formatMessage;
   }
 
   async delete(messageId: string, userId: string) {
