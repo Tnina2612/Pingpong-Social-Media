@@ -1,11 +1,10 @@
 import { MessageSquare, Plus } from "lucide-react";
 import { useState } from "react";
+import { useChatStore } from "@/hooks/useChatStore";
+import { useCreateChannel, useGetAllChannel } from "@/services/chat";
+import type { Channel, CreateChannelProps } from "@/types";
 import { ChannelGroup } from "./ChannelGroup";
 import { ChannelItem } from "./ChannelItem";
-import { useGetAllChannel, useCreateChannel } from "@/services/chat";
-import type { Channel, CreateChannelProps } from "@/types";
-import { useChatStore } from "@/hooks/useChatStore";
-
 
 export const ChatChannel = ({ serverId }: { serverId: string }) => {
   const { data: channels = [] } = useGetAllChannel(serverId);
@@ -32,10 +31,11 @@ export const ChatChannel = ({ serverId }: { serverId: string }) => {
       },
     });
   };
+
   const handleClickChannel = (channel: Channel) => {
-  
     setCurrChannel(channel);
   };
+
   return (
     <ChannelGroup title="TEXT CHANNELS">
       <div className="space-y-1">
@@ -55,7 +55,7 @@ export const ChatChannel = ({ serverId }: { serverId: string }) => {
         {!isCreating && (
           <button
             onClick={() => setIsCreating(true)}
-            className="w-full flex items-center gap-2 px-2 py-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors text-xs"
+            className="w-full flex items-center gap-2 px-2 py-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors text-xs cursor-pointer"
           >
             <Plus size={14} />
             <span>Create Channel</span>

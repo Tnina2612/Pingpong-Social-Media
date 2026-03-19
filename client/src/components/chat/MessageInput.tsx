@@ -1,9 +1,9 @@
+import { Gift, Image, Plus, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { useCreateMessage } from "@/services/chat";
 import { useUploadMedia } from "@/services/homepage/upload";
 import type { Message } from "@/types/message";
 import type { UploadType } from "@/types/upload";
-import { Gift, Image, Plus, X } from "lucide-react";
-import { useRef, useState } from "react";
 
 interface Props {
   channelId: string;

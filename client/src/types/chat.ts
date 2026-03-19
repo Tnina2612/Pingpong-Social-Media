@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import type { User } from "./user";
-import type { Attachment } from "./attachment";
 import type { UploadType } from "./upload";
+import type { User } from "./user";
 
 export type UserStatus = "online" | "idle" | "dnd" | "offline";
 
@@ -30,7 +29,7 @@ export interface MessageBubbleProps {
   time: string;
   content: string;
   isAI?: boolean;
-  replyto?: {
+  replyTo?: {
     id: string;
     content: string;
   };

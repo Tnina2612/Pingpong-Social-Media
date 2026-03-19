@@ -1,11 +1,9 @@
 import { Mic, Settings } from "lucide-react";
-
-import { Avatar } from "./Avatar";
-
-import { ChatChannel } from "./ChatChannel";
-import { AudioChannel } from "./AudioChannel";
-import { useGetServerById } from "@/services/chat";
 import { useAuthUser } from "@/hooks";
+import { useGetServerById } from "@/services/chat";
+import { AudioChannel } from "./AudioChannel";
+import { Avatar } from "./Avatar";
+import { ChatChannel } from "./ChatChannel";
 
 interface Props {
   serverId: string;
@@ -32,7 +30,7 @@ export const Sidebar = ({ serverId }: Props) => {
       {/* User Footer */}
       <div className="px-3 py-2 bg-[#292b2f] flex items-center gap-2 border-t border-[#202225]">
         <Avatar
-          alt="Sarah Jenkins"
+          alt={user?.username || "User avatar"}
           src={user?.avatar || ""}
           size="sm"
           status="online"

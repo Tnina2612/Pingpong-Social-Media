@@ -1,7 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import { useCreateServer } from "@/services/chat";
 import { useUploadMedia } from "@/services/homepage/upload";
 import { type UploadType } from "@/types/upload";
-import { useEffect, useRef, useState } from "react";
+
 interface Props {
   onClose: () => void;
 }
@@ -9,7 +10,6 @@ export const CreateServerModal = ({ onClose }: Props) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const { mutate: createServer, isPending: isCreateServerPending } =
     useCreateServer();
-
   const { mutate: uploadMedia, isPending: isUploadMediaPending } =
     useUploadMedia();
 
@@ -33,11 +33,21 @@ export const CreateServerModal = ({ onClose }: Props) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [onClose]);
+
+  useEffect(() => {
+    // Revoke the previous object URL when replacing it and on unmount
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // preview
+    // Preview icon of server
     setPreview(URL.createObjectURL(file));
 
     const formData = new FormData();
@@ -68,7 +78,11 @@ export const CreateServerModal = ({ onClose }: Props) => {
         <div className="flex flex-col items-center mb-4">
           <label className="w-20 h-20 rounded-full bg-[#36393f] flex items-center justify-center cursor-pointer overflow-hidden">
             {preview ? (
-              <img src={preview} className="w-full h-full object-cover" />
+              <img
+                src={preview}
+                alt="Server icon preview"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <span className="text-gray-400 text-sm">Upload</span>
             )}
@@ -94,7 +108,7 @@ export const CreateServerModal = ({ onClose }: Props) => {
         <button
           onClick={handleCreateServer}
           disabled={isCreateServerPending || isUploadMediaPending}
-          className="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded"
+          className="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded cursor-pointer"
         >
           Create
         </button>

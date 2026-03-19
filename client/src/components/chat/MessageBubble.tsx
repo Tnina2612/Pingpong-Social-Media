@@ -7,7 +7,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   time,
   content,
   isAI = false,
-  replyto,
+  replyTo,
   attachments,
 }) => (
   <div
@@ -40,15 +40,15 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
       </div>
 
       {/* Reply to message quote */}
-      {replyto && (
+      {replyTo && (
         <div className="mb-2 bg-gray-700/30 border-l-2 border-gray-500 pl-2 py-1 rounded">
           <p className="text-xs text-gray-400 mb-0.5">
             <span className="text-blue-300 font-semibold">
-              {replyto.content}
+              {replyTo.content}
             </span>
           </p>
           <p className="text-xs text-gray-300 line-clamp-2">
-            {replyto.content}
+            {replyTo.content}
           </p>
         </div>
       )}

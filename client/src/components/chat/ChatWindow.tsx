@@ -1,29 +1,27 @@
-import type { Channel } from "@/types";
-import { ChannelHeader } from "./ChannelHeader";
-
-import { MessageBubble } from "./MessageBubble";
-import { MessageInput } from "./MessageInput";
-import { useGetMessages } from "@/services/chat";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useSocketStore } from "@/hooks/useSocketStore";
+import { useGetMessages } from "@/services/chat";
+import type { Channel } from "@/types";
+import { ChannelHeader } from "./ChannelHeader";
+import { MessageBubble } from "./MessageBubble";
+import { MessageInput } from "./MessageInput";
 
-import { useQueryClient } from "@tanstack/react-query";
 interface Props {
   channel?: Channel | null;
 }
+
 export const ChatWindow = ({ channel }: Props) => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetMessages(channel?.id || "");
-  const messages =
-    data?.pages
-      ?.slice()
-      .reverse()
-      .flatMap((page) => page) ?? [];
+  const messages = data?.pages?.slice().reverse().flat() ?? [];
   const containerRef = useRef<HTMLDivElement>(null);
   const firstLoad = useRef(true);
   const bottomRef = useRef<HTMLDivElement>(null);
+  
   const { socket } = useSocketStore();
   const queryClient = useQueryClient();
+
   const loadMore = async () => {
     const container = containerRef.current;
     if (!container) return;
@@ -45,6 +43,7 @@ export const ChatWindow = ({ channel }: Props) => {
       threshold
     );
   };
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -73,7 +72,6 @@ export const ChatWindow = ({ channel }: Props) => {
 
   useEffect(() => {
     if (!socket || !channel?.id) return;
-
     socket.emit("join-channel", { channelId: channel.id });
 
     return () => {
@@ -158,6 +156,7 @@ export const ChatWindow = ({ channel }: Props) => {
       socket.off("delete-message", handleDelete);
     };
   }, [socket, channel?.id]);
+  
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ChannelHeader
@@ -174,7 +173,7 @@ export const ChatWindow = ({ channel }: Props) => {
             author={msg.sender}
             content={msg.content || ""}
             time="4AM"
-            replyto={msg.replyto}
+            replyTo={msg.replyTo}
             attachments={msg.attachments}
           />
         ))}
