@@ -2,7 +2,7 @@ import type { Attachment } from "./attachment";
 
 export interface CreatePostProps {
   content: string;
-  attachments?: Attachment[];
+  attachmentIds?: string[];
 }
 
 export interface PostType {

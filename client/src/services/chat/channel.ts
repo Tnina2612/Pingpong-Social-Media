@@ -2,15 +2,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib";
-import type { ChannelType, CreateChannelProps, ResponseMessage } from "@/types";
+import type { Channel, CreateChannelProps, ResponseMessage } from "@/types";
 
-export const useGetAllChannel = () => {
+export const useGetAllChannel = (serverId: string) => {
+  const isEnabled = !!serverId;
+
   return useQuery({
-    queryKey: ["getallchannels"],
+    queryKey: ["getallchannels", serverId],
     queryFn: async () => {
-      const res = await apiClient.get("Channels");
-      return res.data as ChannelType[];
+      if (!serverId) {
+        return [] as Channel[];
+      }
+      const res = await apiClient.get(`channels/server/${serverId}`);
+      return res.data as Channel[];
     },
+    enabled: isEnabled,
   });
 };
 
@@ -19,7 +25,7 @@ export const useGetChannelById = (channelId: string, enabled: boolean) => {
     queryKey: ["getchannelbyid", channelId],
     queryFn: async () => {
       const res = await apiClient.get(`channels/${channelId}`);
-      return res.data as ChannelType;
+      return res.data as Channel;
     },
     enabled,
   });
@@ -29,12 +35,12 @@ export const useCreateChannel = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: CreateChannelProps) => {
-      const res = await apiClient.post("Channels", data);
-      return res.data as ChannelType;
+      const res = await apiClient.post("channels", data);
+      return res.data as Channel;
     },
-    onSuccess: async () => {
+    onSuccess: async (data, variable) => {
       await queryClient.invalidateQueries({
-        queryKey: ["getallchannels"],
+        queryKey: ["getallchannels", variable.serverId],
       });
     },
     onError: async (err: AxiosError) => {

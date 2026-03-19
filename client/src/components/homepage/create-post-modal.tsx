@@ -105,12 +105,11 @@ export default function CreatePostModal({ onClose }: Props) {
 
   const handleCreatePost = () => {
     if (!content.trim()) return;
-
+    const attachmentIds = attachments.map((a) => a.id);
     createPost({
       content,
-      attachments: attachments,
+      attachmentIds,
     });
-
     setContent("");
     setAudience("Friends");
     setAttachments([]);

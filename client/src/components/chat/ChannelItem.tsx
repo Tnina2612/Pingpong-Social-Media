@@ -7,8 +7,10 @@ export const ChannelItem: FC<ChannelItemProps> = ({
   icon,
   locked = false,
   active = false,
+  onClick,
 }) => (
   <div
+    onClick={onClick}
     className={`flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer text-sm transition-colors
       ${active ? "bg-indigo-500/25 text-white" : "text-gray-400 hover:text-gray-200 hover:bg-white/5"}`}
   >

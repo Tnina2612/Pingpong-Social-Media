@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional, IsString, IsUrl } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class CreateServerDto {
   @ApiProperty({
@@ -13,13 +13,12 @@ export class CreateServerDto {
   name: string;
 
   @ApiProperty({
-    description: "Icon URL of the server",
-    example: "https://example.com/image.jpg",
+    description: "Attachment ID of the server icon",
+    example: "att_123e4567-e89b-12d3-a456-426614174000",
     type: String,
     required: false,
   })
   @IsString()
-  @IsUrl()
   @IsOptional()
   iconAttachmentId?: string;
 }
