@@ -22,7 +22,7 @@ export class FeedService {
       f.receiverId === authorId ? f.requesterId : f.receiverId,
     );
 
-    if (friendIds.length === 0) return;
+    friendIds.push(authorId);
 
     // Push to Redis using a Pipeline for high performance
     const pipeline = this.redis.pipeline();
@@ -35,6 +35,9 @@ export class FeedService {
 
       // Optimization: Cap the feed at 500 posts to save memory
       pipeline.zremrangebyrank(feedKey, 0, -501);
+
+      // Ensure the feed key expires after 7 days, matching the pull model
+      pipeline.expire(feedKey, 60 * 60 * 24 * 7);
     }
 
     await pipeline.exec();

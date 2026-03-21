@@ -64,7 +64,7 @@ export class PostsService {
 
   async create(userId: string, dto: CreatePostDto) {
     // Format attachments for Prisma
-    return this.prisma.$transaction(async (tx) => {
+    const post = await this.prisma.$transaction(async (tx) => {
       const post = await tx.post.create({
         data: {
           content: dto.content,
@@ -93,15 +93,17 @@ export class PostsService {
             status: "USED",
           },
         });
-
-        // Do NOT await this so the HTTP response to the user is instant
-        this.feedService
-          .pushPostToFriends(userId, post.id, post.createdAt.getTime())
-          .catch((err) => console.error("Failed to push feed:", err));
-
-        return { message: "Create post successfully" };
       }
+
+      return post;
     });
+
+    // Do NOT await this so the HTTP response to the user is instant
+    this.feedService
+      .pushPostToFriends(userId, post.id, post.createdAt.getTime())
+      .catch((err) => console.error("Failed to push feed:", err));
+
+    return { message: "Create post successfully" };
   }
 
   async getFeed(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
@@ -141,9 +143,11 @@ export class PostsService {
     });
 
     // Re-order the SQL results to match the exact chronological order dictated by Redis
+    // Build a Map from posts by id to keep the operation O(n)
+    const postById = new Map(posts.map((post) => [post.id, post] as const));
     const sortedPosts = postIds
-      .map((id) => posts.find((p) => p.id === id))
-      .filter(Boolean);
+      .map((id) => postById.get(id))
+      .filter((post): post is (typeof posts)[number] => post !== undefined);
 
     return sortedPosts.map((post) => this.mapToDto(post));
   }
