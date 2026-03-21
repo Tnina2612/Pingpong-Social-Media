@@ -42,7 +42,25 @@ export class ChannelController {
     return this.channelService.create(userId, dto);
   }
 
-  // GET /api/channels/:serverId
+  // GET /api/channels/:channelId
+  @ApiOperation({ summary: "Get a specific channel by ID" })
+  @ApiParam({ name: "channelId", description: "Channel ID" })
+  @ApiResponse({
+    status: 200,
+    description: "Channel retrieved successfully",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Forbidden - access denied" })
+  @ApiResponse({ status: 404, description: "Channel not found" })
+  @Get(":channelId")
+  findById(
+    @Param("channelId") channelId: string,
+    @GetUser("id") userId: string,
+  ) {
+    return this.channelService.findById(channelId, userId);
+  }
+
+  // GET /api/channels/server/:serverId
   @ApiOperation({ summary: "Get all channels in a server" })
   @ApiParam({ name: "serverId", description: "Server ID" })
   @ApiResponse({
@@ -51,7 +69,7 @@ export class ChannelController {
   })
   @ApiResponse({ status: 401, description: "Unauthorized" })
   @ApiResponse({ status: 404, description: "Server not found" })
-  @Get(":serverId")
+  @Get("server/:serverId")
   findByServer(
     @Param("serverId") serverId: string,
     @GetUser("id") userId: string,

@@ -1,22 +1,35 @@
 import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
+
 interface SocketStore {
   socket: Socket | null;
   connect: (token: string) => void;
-  diconnect: () => void;
+  disconnect: () => void;
 }
 
-const socket = io("http://localhost:3000", { autoConnect: false });
-export const useSocketStore = create<SocketStore>((set) => ({
-  socket,
-  connect: (token: string) => {
-    socket.auth = { token };
-    socket.connect();
-  },
-  diconnect: () => {
-    set((state) => {
-      state.socket?.disconnect();
-      return { socket: null };
-    });
-  },
-}));
+const SOCKET_BASE_URL = "http://localhost:3000";
+
+export const useSocketStore = create<SocketStore>((set, get) => {
+  return {
+    socket: null,
+
+    connect: (token: string) => {
+      const existingSocket = get().socket;
+
+      if (existingSocket?.connected) return;
+
+      const newSocket = io(SOCKET_BASE_URL, {
+        auth: { token },
+        autoConnect: true,
+      });
+
+      set({ socket: newSocket });
+    },
+
+    disconnect: () => {
+      const currentSocket = get().socket;
+      currentSocket?.disconnect();
+      set({ socket: null });
+    },
+  };
+});

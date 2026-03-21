@@ -1,18 +1,17 @@
 import type { Channel } from "@/types";
 import { ChannelHeader } from "./ChannelHeader";
-
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { useGetMessages } from "@/services/chat";
 import { useEffect, useRef, useState } from "react";
 import { useSocketStore } from "@/hooks/useSocketStore";
-
 import { useQueryClient } from "@tanstack/react-query";
 import type { Message } from "@/types/message";
 import { formatDate } from "@/utils";
 interface Props {
   channel?: Channel | null;
 }
+
 export const ChatWindow = ({ channel }: Props) => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetMessages(channel?.id || "");
@@ -25,6 +24,7 @@ export const ChatWindow = ({ channel }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const firstLoad = useRef(true);
   const bottomRef = useRef<HTMLDivElement>(null);
+
   const { socket } = useSocketStore();
   const queryClient = useQueryClient();
   const [replyMsg, setReplyMsg] = useState<Message | null>(null);
@@ -49,6 +49,7 @@ export const ChatWindow = ({ channel }: Props) => {
       threshold
     );
   };
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -78,7 +79,16 @@ export const ChatWindow = ({ channel }: Props) => {
   useEffect(() => {
     if (!socket || !channel?.id) return;
 
-    socket.emit("join-channel", { channelId: channel.id });
+    const join = () => {
+      console.log("🔥 joining", channel.id);
+      socket.emit("join-channel", { channelId: channel.id });
+    };
+
+    if (socket.connected) {
+      join();
+    } else {
+      socket.once("connect", join);
+    }
 
     return () => {
       socket.emit("leave-channel", { channelId: channel.id });
@@ -90,7 +100,7 @@ export const ChatWindow = ({ channel }: Props) => {
 
     const handleNewMessage = (msg: any) => {
       const shouldScroll = isNearBottom();
-      queryClient.setQueryData(["messages", channel.id], (oldData: any) => {
+      queryClient.setQueryData(["getmessages", channel.id], (oldData: any) => {
         if (!oldData) return oldData;
 
         return {
@@ -117,7 +127,7 @@ export const ChatWindow = ({ channel }: Props) => {
     if (!socket || !channel?.id) return;
 
     const handleUpdate = (updatedMsg: any) => {
-      queryClient.setQueryData(["messages", channel.id], (oldData: any) => {
+      queryClient.setQueryData(["getmessages", channel.id], (oldData: any) => {
         if (!oldData) return oldData;
 
         return {
@@ -142,7 +152,7 @@ export const ChatWindow = ({ channel }: Props) => {
     if (!socket || !channel?.id) return;
 
     const handleDelete = ({ id }: { id: string }) => {
-      queryClient.setQueryData(["messages", channel.id], (oldData: any) => {
+      queryClient.setQueryData(["getmessages", channel.id], (oldData: any) => {
         if (!oldData) return oldData;
 
         return {
@@ -162,6 +172,7 @@ export const ChatWindow = ({ channel }: Props) => {
       socket.off("delete-message", handleDelete);
     };
   }, [socket, channel?.id]);
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <ChannelHeader

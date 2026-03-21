@@ -1,5 +1,5 @@
-import type { Channel } from "@/types";
 import { create } from "zustand";
+import type { Channel } from "@/types";
 
 interface ChatStore {
   currChannel: Channel | null;

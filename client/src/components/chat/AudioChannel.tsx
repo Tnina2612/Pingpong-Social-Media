@@ -1,9 +1,9 @@
-import { Volume2, Plus } from "lucide-react";
+import { Plus, Volume2 } from "lucide-react";
 import { useState } from "react";
+import { useCreateChannel, useGetAllChannel } from "@/services/chat";
+import type { CreateChannelProps } from "@/types";
 import { ChannelGroup } from "./ChannelGroup";
 import { ChannelItem } from "./ChannelItem";
-import { useGetAllChannel, useCreateChannel } from "@/services/chat";
-import type { CreateChannelProps } from "@/types";
 
 export const AudioChannel = ({ serverId }: { serverId: string }) => {
   const { data: channels = [] } = useGetAllChannel(serverId);

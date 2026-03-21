@@ -1,14 +1,14 @@
-import { apiClient } from "@/lib";
-import type { CreateMessageData, Message } from "@/types/message";
 import {
   useInfiniteQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import { apiClient } from "@/lib";
+import type { CreateMessageData, Message } from "@/types/message";
 
 export const useGetMessages = (channelId: string) => {
   return useInfiniteQuery<Message[]>({
-    queryKey: ["messages", channelId],
+    queryKey: ["getmessages", channelId],
     enabled: !!channelId,
     initialPageParam: undefined,
     queryFn: async ({ pageParam }) => {
@@ -32,9 +32,9 @@ export const useCreateMessage = () => {
       const res = await apiClient.post("messages", data);
       return res.data;
     },
-    onSuccess: (message) => {
+    onSuccess: (_message, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["messages", message.channelId],
+        queryKey: ["getmessages", variables.channelId],
       });
     },
   });

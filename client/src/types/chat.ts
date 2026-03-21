@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import type { User } from "./user";
-import type { Attachment } from "./attachment";
 import type { UploadType } from "./upload";
 import type { Message } from "./message";
+import type { User } from "./user";
 
 export type UserStatus = "online" | "idle" | "dnd" | "offline";
 

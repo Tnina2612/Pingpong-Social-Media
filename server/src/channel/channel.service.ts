@@ -46,6 +46,36 @@ export class ChannelService {
     return this.mapToDto(channel);
   }
 
+  async findById(
+    channelId: string,
+    userId: string,
+  ): Promise<ChannelResponseDto> {
+    const channel = await this.prisma.channel.findUnique({
+      where: { id: channelId },
+      include: {
+        server: true,
+        _count: { select: { messages: true } },
+      },
+    });
+
+    if (!channel) {
+      throw new NotFoundException("Channel not found");
+    }
+
+    const isMember = await this.prisma.server.findFirst({
+      where: {
+        id: channel.serverId,
+        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+      },
+    });
+
+    if (!isMember) {
+      throw new ForbiddenException("Access denied");
+    }
+
+    return this.mapToDto(channel);
+  }
+
   async findByServer(
     serverId: string,
     userId: string,
