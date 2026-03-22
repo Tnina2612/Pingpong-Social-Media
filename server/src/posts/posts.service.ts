@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import Redis from "ioredis";
+import { FeedService } from "src/feed/feed.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UploadService } from "src/upload/upload.service";
 import { CreatePostDto } from "./dto";
@@ -14,6 +17,8 @@ export class PostsService {
   constructor(
     private prisma: PrismaService,
     private uploadService: UploadService,
+    private feedService: FeedService,
+    @Inject("REDIS") private redis: Redis,
   ) {}
 
   private mapToDto(post: any): PostResponseDto {
@@ -59,7 +64,7 @@ export class PostsService {
 
   async create(userId: string, dto: CreatePostDto) {
     // Format attachments for Prisma
-    return this.prisma.$transaction(async (tx) => {
+    const post = await this.prisma.$transaction(async (tx) => {
       const post = await tx.post.create({
         data: {
           content: dto.content,
@@ -76,7 +81,7 @@ export class PostsService {
         });
 
         if (attachments.length !== dto.attachmentIds.length) {
-          throw new BadRequestException("Invalid attachment ids");
+          throw new BadRequestException("Invalid attachment IDs");
         }
 
         await tx.attachment.updateMany({
@@ -88,10 +93,63 @@ export class PostsService {
             status: "USED",
           },
         });
-
-        return { message: "Create post successfully" };
       }
+
+      return post;
     });
+
+    // Do NOT await this so the HTTP response to the user is instant
+    this.feedService
+      .pushPostToFriends(userId, post.id, post.createdAt.getTime())
+      .catch((err) => console.error("Failed to push feed:", err));
+
+    return { message: "Create post successfully" };
+  }
+
+  async getFeed(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
+    const POSTS_PER_PAGE = 20;
+    const start = (page - 1) * POSTS_PER_PAGE;
+    const stop = start + POSTS_PER_PAGE - 1;
+    const feedKey = `feed:${currentUserId}`;
+
+    // Try to read from Redis
+    // ZREVRANGE fetches highest scores (newest timestamps) first
+    let postIds = await this.redis.zrevrange(feedKey, start, stop);
+
+    // Cache Miss (Pull Model)
+    if (postIds.length === 0 && page === 1) {
+      console.log(
+        `Cache miss for user ${currentUserId}, building feed via Pull...`,
+      );
+      await this.feedService.buildFeedOnTheFly(currentUserId);
+
+      // Try reading from Redis one more time
+      postIds = await this.redis.zrevrange(feedKey, start, stop);
+    }
+
+    if (postIds.length === 0) return [];
+
+    const posts = await this.prisma.post.findMany({
+      where: { id: { in: postIds } },
+      include: {
+        author: { select: { id: true, username: true, avatar: true } },
+        attachments: true,
+        likes: {
+          where: { userId: currentUserId },
+          select: { userId: true },
+        },
+        _count: { select: { likes: true, comments: true } },
+      },
+    });
+
+    // Re-order the SQL results to match the exact chronological order dictated by Redis
+    // Build a Map from posts by id to keep the operation O(n)
+    const postById = new Map(posts.map((post) => [post.id, post] as const));
+    const sortedPosts = postIds
+      .map((id) => postById.get(id))
+      .filter((post): post is (typeof posts)[number] => post !== undefined);
+
+    return sortedPosts.map((post) => this.mapToDto(post));
   }
 
   async findById(
