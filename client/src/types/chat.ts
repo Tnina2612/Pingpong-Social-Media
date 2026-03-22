@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { UploadType } from "./upload";
+import type { Message } from "./message";
 import type { User } from "./user";
 
 export type UserStatus = "online" | "idle" | "dnd" | "offline";
@@ -25,15 +26,18 @@ export interface ChannelGroupProps {
 }
 
 export interface MessageBubbleProps {
+  messageId: string;
   author: User;
   time: string;
   content: string;
   isAI?: boolean;
   replyTo?: {
     id: string;
+    username: string;
     content: string;
   };
   attachments?: UploadType[];
+  onReply?: (message: Message) => void;
 }
 
 export interface DateDividerProps {

@@ -14,7 +14,9 @@ export type Message = {
   attachments?: UploadType[];
   replyTo?: {
     id: string;
+    username: string;
     content: string;
   };
   sender: User;
+  createdAt?: string;
 };

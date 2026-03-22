@@ -7,27 +7,29 @@ interface SocketStore {
   disconnect: () => void;
 }
 
-const SOCKET_BASE_URL =
-  import.meta.env?.VITE_API_BASE_URL ??
-  (typeof window !== "undefined"
-    ? window.location.origin
-    : "http://localhost:3000");
+const SOCKET_BASE_URL = "http://localhost:3000";
 
-export const useSocketStore = create<SocketStore>((_set, get) => {
-  const socket = io(SOCKET_BASE_URL, { autoConnect: false });
+export const useSocketStore = create<SocketStore>((set, get) => {
   return {
-    socket,
+    socket: null,
+
     connect: (token: string) => {
-      const currentSocket = get().socket;
-      if (!currentSocket) {
-        return;
-      }
-      currentSocket.auth = { token };
-      currentSocket.connect();
+      const existingSocket = get().socket;
+
+      if (existingSocket?.connected) return;
+
+      const newSocket = io(SOCKET_BASE_URL, {
+        auth: { token },
+        autoConnect: true,
+      });
+
+      set({ socket: newSocket });
     },
+
     disconnect: () => {
       const currentSocket = get().socket;
       currentSocket?.disconnect();
+      set({ socket: null });
     },
   };
 });

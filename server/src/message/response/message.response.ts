@@ -34,8 +34,9 @@ export class MessageResponseDto {
 
   replyTo?: {
     id: string;
+    username: string;
     content: string;
-  }
+  };
 
   @ApiProperty({
     description: "Sender of the message",
@@ -47,4 +48,7 @@ export class MessageResponseDto {
 
   @Expose()
   reactions: [ReactionGroupDto];
+
+  @Expose()
+  createdAt: Date;
 }
