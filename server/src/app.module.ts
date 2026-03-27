@@ -8,6 +8,7 @@ import { AuthModule } from "./auth/auth.module";
 import { ChannelModule } from "./channel/channel.module";
 import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 import { CommentsModule } from "./comments/comments.module";
+import { FeedModule } from "./feed/feed.module";
 import { LikesModule } from "./likes/likes.module";
 import { MemberModule } from "./member/member.module";
 import { MessageModule } from "./message/message.module";
@@ -32,6 +33,7 @@ import { UsersModule } from "./users/users.module";
     PrismaModule,
     UsersModule,
     RedisModule,
+    FeedModule,
     CloudinaryModule,
     PostsModule,
     CommentsModule,

@@ -9,6 +9,7 @@ import Redis from "ioredis";
 import { FeedService } from "src/feed/feed.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UploadService } from "src/upload/upload.service";
+import { serializeRqData } from "utils";
 import { CreatePostDto } from "./dto";
 import { PostResponseDto } from "./response";
 
@@ -38,6 +39,36 @@ export class PostsService {
         commentCount: post._count.comments,
       },
     };
+  }
+
+  // Pushes a job to the Redis Queue formatted for Python's 'rq' library.
+  private async enqueueMlJob(postId: string, content: string) {
+    const queueName = "rq:queue:post_processing"; // rq's default prefix
+    const jobId = `ml-job-${postId}`;
+
+    // rq expects a specific JSON structure representing the Python function call
+    const jobData = {
+      created_at: new Date().toISOString(),
+      id: jobId,
+      origin: "post_processing",
+      description: `process_new_post('${postId}', ...)`,
+      enqueued_at: new Date().toISOString(),
+      started_at: "",
+      ended_at: "",
+      result_ttl: 500,
+      failure_ttl: 31536000,
+      status: "queued",
+      // The exact name of the Python function in worker.py
+      data: serializeRqData("worker.process_new_post", [postId, content]),
+    };
+
+    const pipeline = this.redis.pipeline();
+    // Add job data to a Redis Hash
+    pipeline.hset(`rq:job:${jobId}`, jobData);
+    // Push the Job ID to the end of the List queue
+    pipeline.rpush(queueName, jobId);
+
+    await pipeline.exec();
   }
 
   async findAll(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
@@ -97,6 +128,11 @@ export class PostsService {
 
       return post;
     });
+
+    // Push job to the Python ML Service
+    if (post.content) {
+      await this.enqueueMlJob(post.id, post.content);
+    }
 
     // Do NOT await this so the HTTP response to the user is instant
     this.feedService
@@ -209,6 +245,10 @@ export class PostsService {
     await this.prisma.post.delete({
       where: { id: postId },
     });
+
+    // Invalidate cache for all users who might have this post in their feed
+    await this.feedService.invalidateFriendsCache(userId);
+    console.log(`[Post] Deleted post ${postId} and invalidated feed cache`);
 
     return { message: "Post and associated media deleted successfully" };
   }
