@@ -1,6 +1,5 @@
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import Redis from "ioredis";
-import { serializeRqData } from "utils";
 
 @Injectable()
 export class UsersService {
@@ -10,22 +9,25 @@ export class UsersService {
     if (topics.length < 3) {
       throw new BadRequestException("At least 3 topics must be chosen");
     }
-    
-    const jobId = `init-vector-${userId}`;
 
-    const jobData = {
-      created_at: new Date().toISOString(),
-      id: jobId,
-      origin: "post_processing", // Using the same worker queue
-      description: `initialize_user_vector('${userId}', ...)`,
-      status: "queued",
-      // Point to the new function in worker.py
-      data: serializeRqData("worker.initialize_user_vector", [userId, topics]),
+    const event = {
+      type: "INIT_USER_VECTOR",
+      data: JSON.stringify({
+        userId,
+        topics,
+      }),
     };
 
-    const pipeline = this.redis.pipeline();
-    pipeline.hset(`rq:job:${jobId}`, jobData);
-    pipeline.rpush("rq:queue:post_processing", jobId);
-    await pipeline.exec();
+    // Push event to Redis Stream
+    await this.redis.xadd(
+      "ml-stream", // stream name
+      "*", // auto ID
+      "type",
+      event.type,
+      "data",
+      event.data,
+    );
+
+    console.log(`[Redis] INIT_USER_VECTOR event queued for user ${userId}`);
   }
 }

@@ -3,12 +3,15 @@ import json
 import uuid
 import urllib.request
 from redis import Redis
-from rq import Worker, Queue, Connection
 from sqlalchemy import create_engine, text
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
 from PIL import Image
 import numpy as np
+
+STREAM_NAME = "ml-stream"
+GROUP_NAME = "ml-workers"
+CONSUMER_NAME = f"worker-{uuid.uuid4()}"
 
 # 1. Initialize Models (Load into RAM once on startup)
 print("Loading ML Models...")
@@ -88,13 +91,20 @@ def process_new_post(post_id: str, content: str, image_urls: list):
         vector = embedding_model.encode(content).tolist()
         
         # Zero-Shot Classification
-        # The model guesses which category fits best
+        # The model guesses which categories fit best and ranks them
         classification = content_classifier(content, CATEGORIES)
-        top_category = classification['labels'][0]
-        confidence = classification['scores'][0]
         
-        # Only assign a category if the model is confident
-        assigned_category = top_category if confidence > 0.6 else None
+        # Get ALL categories with confidence above threshold (not just top 1)
+        # This allows posts to be tagged with multiple relevant categories
+        CATEGORY_CONFIDENCE_THRESHOLD = 0.5
+        assigned_categories = []
+        
+        for category, score in zip(classification['labels'], classification['scores']):
+            if score >= CATEGORY_CONFIDENCE_THRESHOLD:
+                assigned_categories.append((category, score))
+        
+        # Sort by confidence descending for logging
+        assigned_categories.sort(key=lambda x: x[1], reverse=True)
 
         # 1. Update the Post's vector
         conn.execute(
@@ -106,37 +116,45 @@ def process_new_post(post_id: str, content: str, image_urls: list):
             {"vector": json.dumps(vector), "post_id": post_id}
         )
         
-        # 2. If categorized, link it to the Category table
-        if assigned_category:
-            # Get or create category by name
-            category_result = conn.execute(
-                text('SELECT id FROM "Category" WHERE name = :name'),
-                {"name": assigned_category},
-            ).fetchone()
+        # 2. If categorized, link post to all matching categories
+        if assigned_categories:
+            category_links = []
+            category_log = []
             
-            if category_result:
-                category_id = str(category_result[0])
-            else:
-                # Create new category if it doesn't exist
-                category_id = str(uuid.uuid4())
+            for category_name, confidence in assigned_categories:
+                # Get or create category by name
+                category_result = conn.execute(
+                    text('SELECT id FROM "Category" WHERE name = :name'),
+                    {"name": category_name},
+                ).fetchone()
+                
+                if category_result:
+                    category_id = str(category_result[0])
+                else:
+                    # Create new category if it doesn't exist
+                    category_id = str(uuid.uuid4())
+                    conn.execute(
+                        text('INSERT INTO "Category" (id, name) VALUES (:id, :name)'),
+                        {"id": category_id, "name": category_name},
+                    )
+                    print(f"[Category] Created new category: {category_name} ({category_id[:8]}...)")
+                
+                # Track link to insert
+                category_links.append({"A": category_id, "B": post_id})
+                category_log.append(f"{category_name} ({confidence:.2f})")
+            
+            # Bulk insert all category links for this post
+            if category_links:
                 conn.execute(
-                    text('INSERT INTO "Category" (id, name) VALUES (:id, :name)'),
-                    {"id": category_id, "name": assigned_category},
+                    text("""
+                        INSERT INTO "_CategoryToPost" ("A", "B")
+                        VALUES (:A, :B)
+                        ON CONFLICT DO NOTHING
+                    """),
+                    category_links,
                 )
-                print(f"[Category] Created new category: {assigned_category} ({category_id[:8]}...)")
             
-            # Link post to category via join table
-            # "_CategoryToPost" has: "A" = categoryId, "B" = postId
-            conn.execute(
-                text("""
-                    INSERT INTO "_CategoryToPost" ("A", "B")
-                    VALUES (:A, :B)
-                    ON CONFLICT DO NOTHING
-                """),
-                {"A": category_id, "B": post_id},
-            )
-            
-            print(f"[Category] Post {post_id} tagged as {assigned_category} ({confidence:.2f})")
+            print(f"[Category] Post {post_id} tagged as: {', '.join(category_log)}")
 
     print(f"Successfully processed and vectorized post {post_id}")
 
@@ -237,9 +255,75 @@ def update_user_vector(user_id: str, post_id: str, interaction_weight: float):
         
     print(f"User {user_id} vector successfully updated.")
 
+def ensure_consumer_group():
+    try:
+        redis_conn.xgroup_create(STREAM_NAME, GROUP_NAME, id="0", mkstream=True)
+        print(f"[Redis] Consumer group '{GROUP_NAME}' created")
+    except Exception as e:
+        if "BUSYGROUP" in str(e):
+            print(f"[Redis] Consumer group already exists")
+        else:
+            raise
+
+def handle_event(event_type, data):
+    if event_type == "INIT_USER_VECTOR":
+        initialize_user_vector(
+            user_id=data["userId"],
+            selected_topics=data["topics"]
+        )
+    elif event_type == "PROCESS_NEW_POST":
+        process_new_post(
+            post_id=data["postId"],
+            content=data["content"],
+            image_urls=data.get("imageUrls", [])
+        )
+    elif event_type == "UPDATE_USER_VECTOR":
+        update_user_vector(
+            user_id=data["userId"],
+            post_id=data["postId"],
+            interaction_weight=data["weight"]
+        )
+    elif event_type == "TRIGGER_COMMUNITY_CLUSTERING":
+        # Placeholder: would call cluster_users.run_community_detection()
+        print("[Event] Community clustering triggered (placeholder)")
+    else:
+        print(f"[Warning] Unknown event type: {event_type}")
+
+def start_stream_worker():
+    print(f"[Worker] Starting Redis Stream consumer: {CONSUMER_NAME}")
+
+    while True:
+        try:
+            messages = redis_conn.xreadgroup(
+                groupname=GROUP_NAME,
+                consumername=CONSUMER_NAME,
+                streams={STREAM_NAME: ">"},
+                count=10,
+                block=5000  # 5 seconds
+            )
+
+            for stream, msgs in messages:
+                for msg_id, fields in msgs:
+                    try:
+                        event_type = fields[b"type"].decode()
+                        data = json.loads(fields[b"data"])
+
+                        print(f"[Event] {event_type} received")
+
+                        handle_event(event_type, data)
+
+                        # Acknowledge message
+                        redis_conn.xack(STREAM_NAME, GROUP_NAME, msg_id)
+
+                    except Exception as e:
+                        print(f"[Error] Failed processing message {msg_id}: {e}")
+
+        except Exception as e:
+            print(f"[Redis Error] {e}")
+
 # 3. Start the Worker loop
 if __name__ == '__main__':
-    print("Starting ML Worker...")
-    with Connection(redis_conn):
-        worker = Worker([Queue('post_processing')])
-        worker.work()
+    print("Starting ML Worker (Redis Streams)...")
+
+    ensure_consumer_group()
+    start_stream_worker()

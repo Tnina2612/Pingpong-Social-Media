@@ -185,7 +185,7 @@ export class FeedService {
     const userResult = await this.prisma.$queryRaw<
       [{ interestVector: string }]
     >`
-    SELECT "interestVector"::text FROM "User" WHERE id = ${userId}::uuid
+      SELECT "interestVector"::text FROM "User" WHERE id = ${userId}::text
     `;
 
     const vectorStr = userResult[0]?.interestVector;
@@ -201,7 +201,7 @@ export class FeedService {
       SELECT id, "contentVector" <=> ${vectorStr}::vector AS distance
       FROM "Post"
       WHERE "createdAt" > NOW() - INTERVAL '2 days'
-      AND "authorId" != ${userId}::uuid
+      AND "authorId" != ${userId}::text
       AND status = 'PUBLISHED'
       ORDER BY distance ASC
       LIMIT 50;

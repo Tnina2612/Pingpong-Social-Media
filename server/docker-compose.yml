@@ -62,8 +62,8 @@ services:
       - redis
     volumes:
       - ./ml-worker:/app
-    # Start the RQ worker listening to the 'post_processing' queue
-    command: rq worker post_processing --url redis://redis:6379
+    # Start the Redis Streams worker
+    command: python3 worker.py
     restart: unless-stopped
 
 volumes:

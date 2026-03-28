@@ -9,7 +9,6 @@ import Redis from "ioredis";
 import { FeedService } from "src/feed/feed.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { UploadService } from "src/upload/upload.service";
-import { serializeRqData } from "utils";
 import { CreatePostDto } from "./dto";
 import { PostResponseDto } from "./response";
 
@@ -41,34 +40,29 @@ export class PostsService {
     };
   }
 
-  // Pushes a job to the Redis Queue formatted for Python's 'rq' library.
+  // Pushes an event to Redis Stream for the Python ML worker
   private async enqueueMlJob(postId: string, content: string) {
-    const queueName = "rq:queue:post_processing"; // rq's default prefix
-    const jobId = `ml-job-${postId}`;
-
-    // rq expects a specific JSON structure representing the Python function call
-    const jobData = {
-      created_at: new Date().toISOString(),
-      id: jobId,
-      origin: "post_processing",
-      description: `process_new_post('${postId}', ...)`,
-      enqueued_at: new Date().toISOString(),
-      started_at: "",
-      ended_at: "",
-      result_ttl: 500,
-      failure_ttl: 31536000,
-      status: "queued",
-      // The exact name of the Python function in worker.py
-      data: serializeRqData("worker.process_new_post", [postId, content]),
+    const event = {
+      type: "PROCESS_NEW_POST",
+      data: JSON.stringify({
+        postId,
+        content,
+      }),
     };
 
-    const pipeline = this.redis.pipeline();
-    // Add job data to a Redis Hash
-    pipeline.hset(`rq:job:${jobId}`, jobData);
-    // Push the Job ID to the end of the List queue
-    pipeline.rpush(queueName, jobId);
+    // Push event to Redis Stream
+    await this.redis.xadd(
+      "ml-stream", // stream name
+      "*", // auto ID
+      "type",
+      event.type,
+      "data",
+      event.data,
+    );
 
-    await pipeline.exec();
+    console.log(
+      `[Redis Stream] PROCESS_NEW_POST event queued for post ${postId}`,
+    );
   }
 
   async findAll(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
@@ -143,49 +137,7 @@ export class PostsService {
   }
 
   async getFeed(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
-    const POSTS_PER_PAGE = 20;
-    const start = (page - 1) * POSTS_PER_PAGE;
-    const stop = start + POSTS_PER_PAGE - 1;
-    const feedKey = `feed:${currentUserId}`;
-
-    // Try to read from Redis
-    // ZREVRANGE fetches highest scores (newest timestamps) first
-    let postIds = await this.redis.zrevrange(feedKey, start, stop);
-
-    // Cache Miss (Pull Model)
-    if (postIds.length === 0 && page === 1) {
-      console.log(
-        `Cache miss for user ${currentUserId}, building feed via Pull...`,
-      );
-      await this.feedService.buildFeedOnTheFly(currentUserId);
-
-      // Try reading from Redis one more time
-      postIds = await this.redis.zrevrange(feedKey, start, stop);
-    }
-
-    if (postIds.length === 0) return [];
-
-    const posts = await this.prisma.post.findMany({
-      where: { id: { in: postIds } },
-      include: {
-        author: { select: { id: true, username: true, avatar: true } },
-        attachments: true,
-        likes: {
-          where: { userId: currentUserId },
-          select: { userId: true },
-        },
-        _count: { select: { likes: true, comments: true } },
-      },
-    });
-
-    // Re-order the SQL results to match the exact chronological order dictated by Redis
-    // Build a Map from posts by id to keep the operation O(n)
-    const postById = new Map(posts.map((post) => [post.id, post] as const));
-    const sortedPosts = postIds
-      .map((id) => postById.get(id))
-      .filter((post): post is (typeof posts)[number] => post !== undefined);
-
-    return sortedPosts.map((post) => this.mapToDto(post));
+    return this.feedService.generateMixedFeed(currentUserId, page);
   }
 
   async findById(
