@@ -32,7 +32,7 @@ export class MediasoupService {
 
   async createTransport() {
     const transport = await this.router.createWebRtcTransport({
-      listenIps: [{ ip: "0.0.0.0", announcedIp: "YOUR_PUBLIC_ID" }],
+      listenIps: [{ ip: "127.0.0.1" }],
       enableUdp: true,
       enableTcp: true,
       preferUdp: true,

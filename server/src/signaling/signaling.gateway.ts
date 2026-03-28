@@ -27,8 +27,14 @@ export class SignalingGateway {
     this.media.rooms.get(channelId)?.users.add(client.id);
 
     client.join(channelId);
-
-    return { joined: true };
+    const producers = Array.from(
+      this.media.rooms.get(channelId)?.producers.keys() || [],
+    );
+    return {
+      joined: true,
+      rtpCapabilities: this.media.router.rtpCapabilities,
+      producers,
+    };
   }
 
   @SubscribeMessage("create-transport")
@@ -44,7 +50,7 @@ export class SignalingGateway {
       id: transport.id,
       iceParameters: transport.iceParameters,
       iceCandidates: transport.iceCandidates,
-      dtlsParamaters: transport.dtlsParameters,
+      dtlsParameters: transport.dtlsParameters,
     };
   }
 
@@ -56,7 +62,7 @@ export class SignalingGateway {
     const transports = this.media.transports.get(client.id);
 
     const transport = transports?.find((t) => t.id === transportId);
-
+    if (!transport) throw new Error("Transport not found");
     await transport.connect({ dtlsParameters });
 
     return { connected: true };
@@ -129,6 +135,7 @@ export class SignalingGateway {
       producerId,
       kind: consumer.kind,
       rtpParameters: consumer.rtpParameters,
+      type: consumer.type,
     };
   }
 
@@ -138,14 +145,14 @@ export class SignalingGateway {
 
     const consumers = this.media.consumers.get(client.id) || [];
     consumers.forEach((c) => c.close());
-    this.media.rooms.forEach((room) => {
+    this.media.rooms.forEach((room, roomId) => {
       room.producers.forEach((value, producerId) => {
         if (value.socketId === client.id) {
           value.producer.close();
           room.producers.delete(producerId);
 
           // notify others
-          client.to([...room.users]).emit("producer-closed", {
+          this.server.to(roomId).emit("producer-closed", {
             producerId,
           });
         }
