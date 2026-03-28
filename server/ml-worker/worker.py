@@ -3,6 +3,7 @@ import json
 import uuid
 import urllib.request
 from redis import Redis
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
@@ -31,8 +32,8 @@ CATEGORIES = ["Technology", "Sports", "Music", "Movies", "Gaming", "News", "Prog
               "Animal", "Funny", "Science", "Nature", "Politics", "Anime and manga"]
 
 # 2. Database & Redis Connections
-DB_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DB_URL)
+load_dotenv(dotenv_path="../.env")
+engine = create_engine(os.getenv("SQLALCHEMY_DB_URL"))
 redis_conn = Redis(host='localhost', port=6379)
 
 def process_new_post(post_id: str, content: str, image_urls: list):
@@ -110,7 +111,7 @@ def process_new_post(post_id: str, content: str, image_urls: list):
         conn.execute(
             text("""
                 UPDATE "Post" 
-                SET status = 'PUBLISHED', "contentVector" = :vector::vector 
+                SET status = 'PUBLISHED', "contentVector" = CAST(:vector AS vector) 
                 WHERE id = :post_id
             """),
             {"vector": json.dumps(vector), "post_id": post_id}
@@ -176,7 +177,7 @@ def initialize_user_vector(user_id: str, selected_topics: list):
         conn.execute(
             text("""
                 UPDATE "User" 
-                SET "interestVector" = :vector::vector 
+                SET "interestVector" = CAST(:vector AS vector)
                 WHERE id = :user_id
             """),
             {"vector": json.dumps(vector), "user_id": user_id}
@@ -247,7 +248,7 @@ def update_user_vector(user_id: str, post_id: str, interaction_weight: float):
         conn.execute(
             text("""
                 UPDATE "User" 
-                SET "interestVector" = :vector::vector 
+                SET "interestVector" = CAST(:vector AS vector) 
                 WHERE id = :user_id
             """),
             {"vector": json.dumps(new_user_vec.tolist()), "user_id": user_id}

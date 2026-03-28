@@ -43,7 +43,7 @@ model User {
 
   // The User Interest Vector (e.g., 1536 dimensions if using standard embeddings)
   // This updates dynamically as they like/comment on posts
-  interestVector    Unsupported("vector(1536)")?
+  interestVector    Unsupported("vector(384)")?
 
   // Community Detection mapping
   communityId       String?
@@ -59,7 +59,7 @@ model Community {
   users        User[]
   
   // What does this community care about?
-  themeVector  Unsupported("vector(1536)")? 
+  themeVector  Unsupported("vector(384)")? 
 }
 
 model Friendship {
@@ -91,7 +91,7 @@ model Post {
   likes      Like[]
 
   // The AI-generated embedding of the post's text/images
-  contentVector    Unsupported("vector(1536)")?
+  contentVector    Unsupported("vector(384)")?
 
   // Explicit AI-Tagged Categories (Zero-Shot Classification)
   categories       Category[]
