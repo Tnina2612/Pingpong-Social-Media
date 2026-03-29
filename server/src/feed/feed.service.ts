@@ -63,6 +63,7 @@ export class FeedService {
     return {
       author: { select: { id: true, username: true, avatar: true } },
       attachments: true,
+      categories: { select: { id: true, name: true } },
       _count: { select: { likes: true, comments: true } },
     };
   }
@@ -190,8 +191,13 @@ export class FeedService {
 
     const vectorStr = userResult[0]?.interestVector;
 
-    // If user has no vector yet (cold start not finished), return empty array
-    if (!vectorStr) return [];
+    // If user has no vector yet, fallback to category-based recommendations
+    if (!vectorStr) {
+      this.logger.log(
+        `[AI Recommendations] No interest vector for user ${userId}, falling back to category matching`,
+      );
+      return this.getCategoryBasedRecommendations(userId);
+    }
 
     // 2. Query mathematical similarity - fetch 50+ candidates for better diversity
     const startTime = Date.now();
@@ -203,6 +209,7 @@ export class FeedService {
       WHERE "createdAt" > NOW() - INTERVAL '2 days'
       AND "authorId" != ${userId}::text
       AND status = 'PUBLISHED'
+      AND "contentVector" IS NOT NULL
       ORDER BY distance ASC
       LIMIT 50;
     `;
@@ -210,7 +217,14 @@ export class FeedService {
     const queryTime = Date.now() - startTime;
 
     const postIds = recommendations.map((r) => r.id);
-    if (postIds.length === 0) return [];
+
+    // If no vector-based results, fallback to category matching
+    if (postIds.length === 0) {
+      this.logger.log(
+        `[AI Recommendations] No vector-based posts found for user ${userId}, falling back to category matching`,
+      );
+      return this.getCategoryBasedRecommendations(userId);
+    }
 
     // Create a map for quick confidence lookup
     const confidenceMap = new Map(
@@ -234,6 +248,75 @@ export class FeedService {
           : null,
       )
       .filter((post): post is NonNullable<typeof post> => post !== null);
+  }
+
+  /**
+   * Category-based recommendations for users without contentVector or when vector matching returns no results.
+   * Matches post categories with user's selected categories from onboarding.
+   */
+  private async getCategoryBasedRecommendations(userId: string) {
+    // 1. Get user's selected categories
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { selectedCategories: true },
+    });
+
+    if (!user?.selectedCategories || user.selectedCategories.length === 0) {
+      this.logger.log(
+        `[Category Recommendations] User ${userId} has no selected categories`,
+      );
+      return [];
+    }
+
+    // 2. Find recent posts that match user's selected categories
+    const startTime = Date.now();
+    const matchingPosts = await this.prisma.post.findMany({
+      where: {
+        status: "PUBLISHED",
+        authorId: { not: userId },
+        createdAt: { gte: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+        categories: {
+          some: {
+            name: { in: user.selectedCategories },
+          },
+        },
+      },
+      include: this.getPostIncludeStructure(),
+      take: 50,
+    });
+
+    const queryTime = Date.now() - startTime;
+
+    if (matchingPosts.length === 0) {
+      this.logger.log(
+        `[Category Recommendations] No posts found matching categories for user ${userId}`,
+      );
+      return [];
+    }
+
+    console.log(
+      `[Category Recommendations] Retrieved ${matchingPosts.length} posts for user ${userId} (query: ${queryTime}ms)`,
+    );
+
+    // 3. Calculate confidence based on category overlap
+    return matchingPosts.map((post) => {
+      // Count how many of the user's selected categories overlap with post categories
+      const postCategoryNames = post.categories.map((c) => c.name);
+      const categoryMatches = user.selectedCategories.filter((cat) =>
+        postCategoryNames.includes(cat),
+      ).length;
+
+      // Confidence = (matching category count) / (max selected categories)
+      // Normalized to 0-1 range
+      const confidence =
+        categoryMatches / Math.max(user.selectedCategories.length, 1);
+
+      return {
+        ...post,
+        _source: "CATEGORY_MATCH",
+        _confidence: confidence,
+      };
+    });
   }
 
   private async getCommunityTrending(userId: string) {
@@ -271,9 +354,14 @@ export class FeedService {
   // SCORING POSTS
   private scoreAndSort(candidates: any[]) {
     // 1. Deduplication Map
-    // If a post is both in "FRIEND" and "COMMUNITY", keep the higher priority tag
+    // If a post is in multiple sources, keep the higher priority tag
     const uniqueMap = new Map();
-    const sourcePriority = { FRIEND: 3, AI_VECTOR: 2, COMMUNITY: 1 };
+    const sourcePriority = {
+      FRIEND: 3,
+      AI_VECTOR: 2,
+      CATEGORY_MATCH: 1.5,
+      COMMUNITY: 1,
+    };
 
     for (const post of candidates) {
       if (!uniqueMap.has(post.id)) {
@@ -297,6 +385,7 @@ export class FeedService {
       // Base Source Weight
       if (source === "FRIEND") score += 20;
       if (source === "AI_VECTOR") score += 15;
+      if (source === "CATEGORY_MATCH") score += 12;
       if (source === "COMMUNITY") score += 10;
 
       // Time Decay (Base 50 points, lose 2 points per hour of age)
@@ -312,9 +401,12 @@ export class FeedService {
       // Media Weight (Visual posts hold attention longer)
       if (post.attachments?.length > 0) score += 10;
 
-      // AI Confidence Boost (for vector recommendations)
-      if (source === "AI_VECTOR" && confidence > 0) {
-        score += confidence * 5; // Boost by up to +5 pts based on similarity
+      // AI Confidence Boost (for vector and category-based recommendations)
+      if (
+        (source === "AI_VECTOR" || source === "CATEGORY_MATCH") &&
+        confidence > 0
+      ) {
+        score += confidence * 5; // Boost by up to +5 pts based on similarity/overlap
       }
 
       return {

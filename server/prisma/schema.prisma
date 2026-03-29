@@ -45,6 +45,10 @@ model User {
   // This updates dynamically as they like/comment on posts
   interestVector    Unsupported("vector(384)")?
 
+  // Initial selected categories/topics from onboarding
+  // Used as fallback when contentVector is unavailable
+  selectedCategories String[] @default([])
+
   // Community Detection mapping
   communityId       String?
   community         Community?  @relation(fields: [communityId], references: [id])

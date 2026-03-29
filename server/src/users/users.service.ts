@@ -1,14 +1,24 @@
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import Redis from "ioredis";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject("REDIS") private redis: Redis) {}
+  constructor(
+    @Inject("REDIS") private redis: Redis,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async triggerVectorInitialization(userId: string, topics: string[]) {
     if (topics.length < 3) {
       throw new BadRequestException("At least 3 topics must be chosen");
     }
+
+    // Store selected categories on user profile for fallback recommendations
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { selectedCategories: topics },
+    });
 
     const event = {
       type: "INIT_USER_VECTOR",
