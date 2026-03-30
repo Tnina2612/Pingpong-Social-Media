@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import Redis from "ioredis";
 import { PrismaService } from "src/prisma/prisma.service";
 import { FeedStrategy } from "./enums/feed-strategy.enum";
-import { FeedConfigService } from "./feed-config.service";
 
 @Injectable()
 export class FeedService {
@@ -13,7 +12,6 @@ export class FeedService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject("REDIS") private redis: Redis,
-    private readonly feedConfig: FeedConfigService,
   ) {}
 
   /**

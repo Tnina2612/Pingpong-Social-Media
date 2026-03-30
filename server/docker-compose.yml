@@ -28,12 +28,15 @@ services:
   # 3. The NestJS Backend
   api:
     build: 
-      context: ./backend
+      context: .
+      dockerfile: ./src/Dockerfile
     container_name: pingpong_api
     environment:
       # Notice the hostname is 'postgres', matching the service name above
       - DATABASE_URL=postgresql://user:password@postgres:5432/pingpong?schema=public
       - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=your_super_secret_jwt_key
       # Add your Cloudinary API keys here
     ports:
@@ -43,7 +46,7 @@ services:
       - redis
     # Mount local files so you get hot-reloading in development
     volumes:
-      - ./backend:/usr/src/app
+      - ./src:/usr/src/app
       - /usr/src/app/node_modules
     # Run the NestJS dev server
     command: npm run start:dev
@@ -52,7 +55,8 @@ services:
   # 4. The Python ML Worker
   ml-worker:
     build:
-      context: ./ml-worker
+      context: .
+      dockerfile: ./ml-worker/Dockerfile
     container_name: pingpong_ml_worker
     environment:
       - DATABASE_URL=postgresql://user:password@postgres:5432/pingpong
@@ -61,7 +65,7 @@ services:
       - postgres
       - redis
     volumes:
-      - ./ml-worker:/app
+      - ./ml-worker:/usr/src/app
     # Start the Redis Streams worker
     command: python3 worker.py
     restart: unless-stopped

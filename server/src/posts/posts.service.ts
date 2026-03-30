@@ -41,12 +41,13 @@ export class PostsService {
   }
 
   // Pushes an event to Redis Stream for the Python ML worker
-  private async enqueueMlJob(postId: string, content: string) {
+  private async enqueueMlJob(postId: string, content: string, imageUrls: string[] | undefined) {
     const event = {
       type: "PROCESS_NEW_POST",
       data: JSON.stringify({
         postId,
         content,
+        imageUrls,
       }),
     };
 
@@ -125,7 +126,7 @@ export class PostsService {
 
     // Push job to the Python ML Service
     if (post.content) {
-      await this.enqueueMlJob(post.id, post.content);
+      await this.enqueueMlJob(post.id, post.content, dto.attachmentIds);
     }
 
     // Do NOT await this so the HTTP response to the user is instant

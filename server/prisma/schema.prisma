@@ -41,7 +41,7 @@ model User {
   ownedServers      Server[]
   memberships       Member[]
 
-  // The User Interest Vector (e.g., 1536 dimensions if using standard embeddings)
+  // The User Interest Vector (e.g., 1536 dimensions if using standard embeddings, currently 384 dimensions to match the embedding model)
   // This updates dynamically as they like/comment on posts
   interestVector    Unsupported("vector(384)")?
 
