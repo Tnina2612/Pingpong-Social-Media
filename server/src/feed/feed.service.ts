@@ -121,7 +121,7 @@ export class FeedService {
     friendIds.push(userId);
 
     const recentPosts = await this.prisma.post.findMany({
-      where: { authorId: { in: friendIds } },
+      where: { authorId: { in: friendIds }, status: "PUBLISHED" },
       orderBy: { createdAt: "desc" },
       take: 100,
       select: { id: true, createdAt: true },
@@ -225,8 +225,13 @@ export class FeedService {
     }
 
     // Create a map for quick confidence lookup
+    // pgvector cosine distance ranges from 0 to 2, so we convert to similarity
+    // and clamp to [0, 1]: similarity = 1 - distance, clamped to 0-1
     const confidenceMap = new Map(
-      recommendations.map((r) => [r.id, 1 - r.distance]),
+      recommendations.map((r) => [
+        r.id,
+        Math.max(0, Math.min(1, 1 - r.distance)),
+      ]),
     );
 
     const posts = await this.hydratePosts(postIds);
@@ -235,17 +240,17 @@ export class FeedService {
     );
 
     // Re-order to match pgvector similarity order
-    return postIds
-      .map((id) =>
-        posts.find((p) => p.id === id)
-          ? {
-              ...posts.find((p) => p.id === id)!,
-              _source: "AI_VECTOR",
-              _confidence: confidenceMap.get(id) || 0,
-            }
-          : null,
-      )
-      .filter((post): post is NonNullable<typeof post> => post !== null);
+    const postById = new Map(posts.map((post) => [post.id, post] as const));
+    const sortedPosts = postIds
+      .map((id) => postById.get(id))
+      .filter((post): post is (typeof posts)[number] => post !== undefined)
+      .map((post) => ({
+        ...post,
+        _source: "AI_VECTOR",
+        _confidence: confidenceMap.get(post.id) || 0,
+      }));
+
+    return sortedPosts;
   }
 
   /**
