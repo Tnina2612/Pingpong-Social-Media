@@ -2,11 +2,13 @@ import os
 import uuid
 import networkx as nx
 from community import community_louvain
+from redis import Redis
 from sqlalchemy import create_engine, text
 import json
 
 DB_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DB_URL)
+redis_conn = Redis(host='localhost', port=6379)
 
 def get_graph_hash():
     """
@@ -36,18 +38,16 @@ def should_recalculate_clusters():
     """
     Check if the graph has changed significantly since last clustering.
     Only recalculate if edge count changed by >5% or hash is different.
+    Uses Redis for state persistence (no database table needed).
     """
     try:
-        with engine.connect() as conn:
-            result = conn.execute(text("""
-                SELECT "value" FROM "SystemMetadata" 
-                WHERE "key" = 'last_graph_state'
-            """)).fetchone()
-            
-        if not result:
+        # Fetch last state from Redis
+        last_state_json = redis_conn.get('clustering:last_graph_state')
+        
+        if not last_state_json:
             return True  # First time
             
-        last_state = json.loads(result[0])
+        last_state = json.loads(last_state_json)
         current_edges, current_hash = get_graph_hash()
         last_edges = last_state.get('edge_count', 0)
         
@@ -66,19 +66,15 @@ def should_recalculate_clusters():
         return True
 
 def save_graph_state(edge_count: int, graph_hash: str):
-    """Save the current graph state for delta detection."""
+    """Save the current graph state for delta detection using Redis."""
     state = {
         'edge_count': edge_count,
         'hash': graph_hash,
         'timestamp': str(uuid.uuid4())
     }
     
-    with engine.begin() as conn:
-        conn.execute(text("""
-            INSERT INTO "SystemMetadata" ("key", "value") 
-            VALUES ('last_graph_state', :value)
-            ON CONFLICT ("key") DO UPDATE SET "value" = :value
-        """), {"value": json.dumps(state)})
+    # Store in Redis with no expiration (clustering state persists until next run)
+    redis_conn.set('clustering:last_graph_state', json.dumps(state))
 
 def run_community_detection():
     """
