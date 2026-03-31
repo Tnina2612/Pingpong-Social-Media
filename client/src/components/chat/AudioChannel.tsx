@@ -4,13 +4,15 @@ import { useCreateChannel, useGetAllChannel } from "@/services/chat";
 import type { CreateChannelProps } from "@/types";
 import { ChannelGroup } from "./ChannelGroup";
 import { ChannelItem } from "./ChannelItem";
+import { useSocketStore } from "@/hooks/useSocketStore";
+import { joinVoice } from "@/utils/signaling";
 
 export const AudioChannel = ({ serverId }: { serverId: string }) => {
   const { data: channels = [] } = useGetAllChannel(serverId);
   const { mutate: createChannel } = useCreateChannel();
   const [isCreating, setIsCreating] = useState(false);
   const [channelName, setChannelName] = useState("");
-
+  const socket = useSocketStore((s) => s.socket);
   const voiceChannels = channels.filter((ch) => ch.type === "VOICE");
 
   const handleCreate = () => {
@@ -39,6 +41,7 @@ export const AudioChannel = ({ serverId }: { serverId: string }) => {
               key={channel.id}
               name={channel.name}
               icon={<Volume2 size={14} />}
+              onClick={() => socket && joinVoice(socket, channel.id)}
             />
           ))
         ) : (
