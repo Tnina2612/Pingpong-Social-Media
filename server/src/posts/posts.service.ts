@@ -40,6 +40,32 @@ export class PostsService {
     };
   }
 
+  // Pushes an event to Redis Stream for the Python ML worker
+  private async enqueueMlJob(postId: string, content: string, imageUrls: string[] | undefined) {
+    const event = {
+      type: "PROCESS_NEW_POST",
+      data: JSON.stringify({
+        postId,
+        content,
+        imageUrls,
+      }),
+    };
+
+    // Push event to Redis Stream
+    await this.redis.xadd(
+      "ml-stream", // stream name
+      "*", // auto ID
+      "type",
+      event.type,
+      "data",
+      event.data,
+    );
+
+    console.log(
+      `[Redis Stream] PROCESS_NEW_POST event queued for post ${postId}`,
+    );
+  }
+
   async findAll(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
     const take = 20;
     const skip = (page - 1) * take;
@@ -98,6 +124,11 @@ export class PostsService {
       return post;
     });
 
+    // Push job to the Python ML Service
+    if (post.content) {
+      await this.enqueueMlJob(post.id, post.content, dto.attachmentIds);
+    }
+
     // Do NOT await this so the HTTP response to the user is instant
     this.feedService
       .pushPostToFriends(userId, post.id, post.createdAt.getTime())
@@ -107,49 +138,7 @@ export class PostsService {
   }
 
   async getFeed(currentUserId: string, page = 1): Promise<PostResponseDto[]> {
-    const POSTS_PER_PAGE = 20;
-    const start = (page - 1) * POSTS_PER_PAGE;
-    const stop = start + POSTS_PER_PAGE - 1;
-    const feedKey = `feed:${currentUserId}`;
-
-    // Try to read from Redis
-    // ZREVRANGE fetches highest scores (newest timestamps) first
-    let postIds = await this.redis.zrevrange(feedKey, start, stop);
-
-    // Cache Miss (Pull Model)
-    if (postIds.length === 0 && page === 1) {
-      console.log(
-        `Cache miss for user ${currentUserId}, building feed via Pull...`,
-      );
-      await this.feedService.buildFeedOnTheFly(currentUserId);
-
-      // Try reading from Redis one more time
-      postIds = await this.redis.zrevrange(feedKey, start, stop);
-    }
-
-    if (postIds.length === 0) return [];
-
-    const posts = await this.prisma.post.findMany({
-      where: { id: { in: postIds } },
-      include: {
-        author: { select: { id: true, username: true, avatar: true } },
-        attachments: true,
-        likes: {
-          where: { userId: currentUserId },
-          select: { userId: true },
-        },
-        _count: { select: { likes: true, comments: true } },
-      },
-    });
-
-    // Re-order the SQL results to match the exact chronological order dictated by Redis
-    // Build a Map from posts by id to keep the operation O(n)
-    const postById = new Map(posts.map((post) => [post.id, post] as const));
-    const sortedPosts = postIds
-      .map((id) => postById.get(id))
-      .filter((post): post is (typeof posts)[number] => post !== undefined);
-
-    return sortedPosts.map((post) => this.mapToDto(post));
+    return this.feedService.generateMixedFeed(currentUserId, page);
   }
 
   async findById(
@@ -209,6 +198,10 @@ export class PostsService {
     await this.prisma.post.delete({
       where: { id: postId },
     });
+
+    // Invalidate cache for all users who might have this post in their feed
+    await this.feedService.invalidateFriendsCache(userId);
+    console.log(`[Post] Deleted post ${postId} and invalidated feed cache`);
 
     return { message: "Post and associated media deleted successfully" };
   }

@@ -94,4 +94,6 @@ export class MessageGateway {
 
     client.leave(data.channelId);
   }
+
+  
 }
