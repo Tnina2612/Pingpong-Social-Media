@@ -45,7 +45,7 @@ export class PostsController {
   })
   @Get()
   async getFeed(@GetUser("id") id: string) {
-    return this.postService.findAll(id);
+    return this.postService.getFeed(id);
   }
 
   // POST /api/posts
