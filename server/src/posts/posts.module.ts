@@ -6,7 +6,7 @@ import { PostsService } from "./posts.service";
 import { FeedModule } from "src/feed/feed.module";
 
 @Module({
-  imports: [PrismaModule, UploadModule,FeedModule],
+  imports: [PrismaModule, UploadModule, FeedModule],
   controllers: [PostsController],
   providers: [PostsService],
 })

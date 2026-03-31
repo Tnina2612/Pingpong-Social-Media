@@ -134,7 +134,6 @@ export class MessageService {
       });
 
       const formatMessage = this.mapToDto(fullMessage);
-      console.log("🚀 EMIT TO:", dto.channelId);
 
       this.messageGateway.server
         .to(dto.channelId)
