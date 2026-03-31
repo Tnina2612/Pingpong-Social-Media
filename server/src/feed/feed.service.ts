@@ -179,7 +179,7 @@ export class FeedService {
     return sortedPosts;
   }
 
-  private async getVectorRecommendations(userId: string) {
+  private async getVectorRecommendations(userId: string, page = 1) {
     // 1. Get the user's vector as a string format for pgvector processing
     const userResult = await this.prisma.$queryRaw<
       [{ interestVector: string }]
@@ -194,10 +194,13 @@ export class FeedService {
       this.logger.log(
         `[AI Recommendations] No interest vector for user ${userId}, falling back to category matching`,
       );
-      return this.getCategoryBasedRecommendations(userId);
+      return this.getCategoryBasedRecommendations(userId, page);
     }
 
-    // 2. Query mathematical similarity - fetch 50+ candidates for better diversity
+    // 2. Query mathematical similarity with pagination
+    // Fetch 50 items per page for diverse pagination across all pages
+    const pageSize = 50;
+    const offset = (page - 1) * pageSize;
     const startTime = Date.now();
     const recommendations = await this.prisma.$queryRaw<
       { id: string; distance: number }[]
@@ -209,7 +212,8 @@ export class FeedService {
       AND status = 'PUBLISHED'
       AND "contentVector" IS NOT NULL
       ORDER BY distance ASC
-      LIMIT 50;
+      OFFSET ${offset}
+      LIMIT ${pageSize};
     `;
 
     const queryTime = Date.now() - startTime;
@@ -219,9 +223,9 @@ export class FeedService {
     // If no vector-based results, fallback to category matching
     if (postIds.length === 0) {
       this.logger.log(
-        `[AI Recommendations] No vector-based posts found for user ${userId}, falling back to category matching`,
+        `[AI Recommendations] No vector-based posts found for user ${userId} page ${page}, falling back to category matching`,
       );
-      return this.getCategoryBasedRecommendations(userId);
+      return this.getCategoryBasedRecommendations(userId, page);
     }
 
     // Create a map for quick confidence lookup
@@ -257,7 +261,7 @@ export class FeedService {
    * Category-based recommendations for users without contentVector or when vector matching returns no results.
    * Matches post categories with user's selected categories from onboarding.
    */
-  private async getCategoryBasedRecommendations(userId: string) {
+  private async getCategoryBasedRecommendations(userId: string, page = 1) {
     // 1. Get user's selected categories
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -271,7 +275,9 @@ export class FeedService {
       return [];
     }
 
-    // 2. Find recent posts that match user's selected categories
+    // 2. Find recent posts that match user's selected categories with pagination
+    const pageSize = 50;
+    const skip = (page - 1) * pageSize;
     const startTime = Date.now();
     const matchingPosts = await this.prisma.post.findMany({
       where: {
@@ -285,7 +291,8 @@ export class FeedService {
         },
       },
       include: this.getPostIncludeStructure(),
-      take: 50,
+      skip,
+      take: pageSize,
     });
 
     const queryTime = Date.now() - startTime;
@@ -322,7 +329,7 @@ export class FeedService {
     });
   }
 
-  private async getCommunityTrending(userId: string) {
+  private async getCommunityTrending(userId: string, page = 1) {
     // Fetch user's community cluster assignment
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -331,7 +338,9 @@ export class FeedService {
 
     if (!user?.communityId) return [];
 
-    // Find the most liked recent posts within their Louvain cluster
+    // Find the most liked recent posts within their Louvain cluster with pagination
+    const pageSize = 25;
+    const skip = (page - 1) * pageSize;
     const trending = await this.prisma.post.findMany({
       where: {
         author: { communityId: user.communityId },
@@ -343,7 +352,8 @@ export class FeedService {
         { likes: { _count: "desc" } }, // High engagement first
         { createdAt: "desc" },
       ],
-      take: 10,
+      skip,
+      take: pageSize,
       include: this.getPostIncludeStructure(),
     });
 
@@ -447,7 +457,7 @@ export class FeedService {
   async generateAiFirstFeed(userId: string, page = 1): Promise<any[]> {
     const [friendPosts, aiRecommendedPosts] = await Promise.all([
       this.getRedisFeed(userId, page),
-      this.getVectorRecommendations(userId),
+      this.getVectorRecommendations(userId, page),
     ]);
 
     // Prioritize AI: 60% AI, 40% friends
@@ -460,7 +470,11 @@ export class FeedService {
     this.logger.log(
       `[A/B Test] AI-first feed: ${topAi.length} AI + ${topFriends.length} friends = ${rankedFeed.length} total`,
     );
-    return rankedFeed.slice(0, 20);
+
+    // Paginate: return requested page (20 items per page)
+    const pageSize = 20;
+    const start = (page - 1) * pageSize;
+    return rankedFeed.slice(start, start + pageSize);
   }
 
   /**
@@ -471,8 +485,8 @@ export class FeedService {
     const [friendPosts, aiRecommendedPosts, communityPosts] = await Promise.all(
       [
         this.getRedisFeed(userId, page),
-        this.getVectorRecommendations(userId),
-        this.getCommunityTrending(userId),
+        this.getVectorRecommendations(userId, page),
+        this.getCommunityTrending(userId, page),
       ],
     );
 
@@ -487,7 +501,11 @@ export class FeedService {
     this.logger.log(
       `[A/B Test] Community-first feed: ${topCommunity.length} community + ${topFriends.length} friends + ${topAi.length} AI`,
     );
-    return rankedFeed.slice(0, 20);
+
+    // Paginate: return requested page (20 items per page)
+    const pageSize = 20;
+    const start = (page - 1) * pageSize;
+    return rankedFeed.slice(start, start + pageSize);
   }
 
   // MIXER FEED
@@ -496,8 +514,8 @@ export class FeedService {
     const [friendPosts, aiRecommendedPosts, communityPosts] = await Promise.all(
       [
         this.getRedisFeed(userId, page),
-        this.getVectorRecommendations(userId),
-        this.getCommunityTrending(userId),
+        this.getVectorRecommendations(userId, page),
+        this.getCommunityTrending(userId, page),
       ],
     );
 
@@ -511,8 +529,10 @@ export class FeedService {
     // 3. The Scorer
     const rankedFeed = this.scoreAndSort(allCandidates);
 
-    // 4. Pagination (Return top 20 for this specific page request)
-    return rankedFeed.slice(0, 20);
+    // 4. Pagination (Return requested page, 20 items per page)
+    const pageSize = 20;
+    const start = (page - 1) * pageSize;
+    return rankedFeed.slice(start, start + pageSize);
   }
 
   /**
