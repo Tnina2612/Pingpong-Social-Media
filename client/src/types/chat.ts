@@ -14,6 +14,7 @@ export interface AvatarProps {
 
 export interface ChannelItemProps {
   name: string;
+  channelId : string;
   icon?: ReactNode;
   locked?: boolean;
   active?: boolean;

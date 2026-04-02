@@ -9,7 +9,7 @@ export class MediasoupService {
   rooms = new Map<
     string,
     {
-      users: Set<string>;
+      users: Map<string,any>;
       producers: Map<string, any>;
     }
   >();

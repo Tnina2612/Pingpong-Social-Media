@@ -1,3 +1,4 @@
+import { initVoiceSocket } from "@/utils/signaling";
 import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
 
@@ -24,6 +25,7 @@ export const useSocketStore = create<SocketStore>((set, get) => {
       });
 
       set({ socket: newSocket });
+      initVoiceSocket(get().socket);
     },
 
     disconnect: () => {

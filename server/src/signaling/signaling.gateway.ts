@@ -7,29 +7,57 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { MediasoupService } from "src/mediasoup/mediasoup.service";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @WebSocketGateway({ cors: true })
 export class SignalingGateway {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly media: MediasoupService) {}
+  constructor(
+    private readonly media: MediasoupService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @SubscribeMessage("join-sfu")
-  joinSfu(@ConnectedSocket() client: Socket, @MessageBody() { channelId }) {
+  async joinSfu(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() { channelId },
+  ) {
+    this.leaveSfu(client);
+
     if (!this.media.rooms.has(channelId)) {
       this.media.rooms.set(channelId, {
-        users: new Set(),
+        users: new Map(),
         producers: new Map(),
       });
     }
+    const userId = client.data.userId;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+      },
+    });
 
-    this.media.rooms.get(channelId)?.users.add(client.id);
+    client.data.user = user;
+    const room = this.media.rooms.get(channelId);
+    room?.users.set(client.id, user);
 
     client.join(channelId);
-    const producers = Array.from(
-      this.media.rooms.get(channelId)?.producers.keys() || [],
-    );
+    const producers = Array.from(room?.producers.keys() || []);
+
+    const participants = Array.from(room?.users.values() || []);
+    client.emit("participants", {
+      channelId,
+      users: participants,
+    });
+    client.to(channelId).emit("user-joined", {
+      channelId,
+      user,
+    });
     return {
       joined: true,
       rtpCapabilities: this.media.router.rtpCapabilities,
@@ -83,13 +111,17 @@ export class SignalingGateway {
 
     const room = this.media.rooms.get(channelId);
 
+    const user = client.data.user;
     room?.producers.set(producer.id, {
       socketId: client.id,
       producer,
+      user,
     });
 
     client.to(channelId).emit("new-producer", {
+      channelId,
       producerId: producer.id,
+
     });
 
     return { id: producer.id };
@@ -129,13 +161,17 @@ export class SignalingGateway {
     }
 
     this.media.consumers.get(client.id)?.push(consumer);
-
+    const room = Array.from(this.media.rooms.values()).find((r) =>
+      r.producers.has(producerId),
+    );
+    const producerData = room?.producers.get(producerId);
     return {
       id: consumer.id,
       producerId,
       kind: consumer.kind,
       rtpParameters: consumer.rtpParameters,
       type: consumer.type,
+      user: producerData?.user,
     };
   }
 
@@ -157,11 +193,43 @@ export class SignalingGateway {
           });
         }
       });
-
+      const user = room.users.get(client.id);
       room.users.delete(client.id);
+      this.server.to(roomId).emit("user-left", {
+        channelId: roomId,
+        user,
+      });
     });
 
     this.media.transports.delete(client.id);
     this.media.consumers.delete(client.id);
+  }
+
+  @SubscribeMessage("leave-sfu")
+  async leaveSfu(@ConnectedSocket() client: Socket) {
+    this.media.rooms.forEach((room, roomId) => {
+      if (!room.users.has(client.id)) return;
+
+      const user = room.users.get(client.id);
+
+      room.users.delete(client.id);
+      room.producers.forEach((value, producerId) => {
+        if (value.socketId === client.id) {
+          value.producer.close();
+          room.producers.delete(producerId);
+
+          this.server.to(roomId).emit("producer-closed", {
+            producerId,
+          });
+        }
+      });
+
+      //notify user
+      this.server.to(roomId).emit("user-left", {
+        channelId: roomId,
+        user,
+      });
+      client.leave(roomId);
+    });
   }
 }
