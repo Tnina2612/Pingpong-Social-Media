@@ -1,4 +1,3 @@
-import { Hash, Lock } from "lucide-react";
 import type { FC } from "react";
 import type { ChannelItemProps } from "../../types/chat";
 import { useVoiceStore } from "@/hooks/useVoiceStore";
@@ -11,7 +10,8 @@ export const ChannelItem: FC<ChannelItemProps> = ({
   onClick,
   channelId,
 }) => {
-  const users = useVoiceStore((s) => s.participantsByChannel[channelId]) || [];
+  const users = useVoiceStore((s) => s.participantsByChannel[channelId] || []);
+  const activeUsers = useVoiceStore((s) => s.activeSpeaker[channelId]) || [];
   console.log(users);
   return (
     <div>
@@ -29,7 +29,11 @@ export const ChannelItem: FC<ChannelItemProps> = ({
         {users.map((user) => (
           <div
             key={user.id}
-            className="flex items-center gap-2 text-xs text-gray-300"
+            className={`flex items-center gap-2 text-xs text-gray-300 p-1 rounded
+               ${
+                 activeUsers.includes(user.id) &&
+                 "ring-2 ring-green-500 bg-green-500/10"
+               }`}
           >
             <img
               src={user.avatar || "/default.png"}

@@ -1,7 +1,7 @@
 import { Plus, Volume2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCreateChannel, useGetAllChannel } from "@/services/chat";
-import type { CreateChannelProps } from "@/types";
+import type { CreateChannelProps, User } from "@/types";
 import { ChannelGroup } from "./ChannelGroup";
 import { ChannelItem } from "./ChannelItem";
 import { useSocketStore } from "@/hooks/useSocketStore";
@@ -32,6 +32,19 @@ export const AudioChannel = ({ serverId }: { serverId: string }) => {
       },
     });
   };
+  useEffect(() => {
+    if (!socket || !serverId || !socket.connected) return;
+
+    const fetch = async () => {
+      const data = await socket.emitWithAck("get-voice-participants", {
+        serverId,
+      });
+
+      useVoiceStore.getState().setAllParticipants(data);
+    };
+
+    fetch();
+  }, [serverId, socket]);
 
   return (
     <ChannelGroup title="VOICE CHANNELS">
@@ -51,7 +64,7 @@ export const AudioChannel = ({ serverId }: { serverId: string }) => {
                   leaveVoice(socket);
                 }
 
-                joinVoice(socket, channel.id);
+                joinVoice(socket, channel.id, serverId);
               }}
             />
           ))

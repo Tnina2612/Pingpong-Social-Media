@@ -25,7 +25,7 @@ export const useSocketStore = create<SocketStore>((set, get) => {
       });
 
       set({ socket: newSocket });
-      initVoiceSocket(get().socket);
+      initVoiceSocket(newSocket);
     },
 
     disconnect: () => {

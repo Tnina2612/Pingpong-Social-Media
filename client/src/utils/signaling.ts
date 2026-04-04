@@ -10,12 +10,16 @@ let recvTransport: mediasoupClient.types.Transport;
 let producers: mediasoupClient.types.Producer[] = [];
 let consumers: mediasoupClient.types.Consumer[] = [];
 
-export const joinVoice = async (socket: Socket, channelId: string) => {
+export const joinVoice = async (
+  socket: Socket,
+  channelId: string,
+  serverId: string,
+) => {
   const store = useVoiceStore.getState();
   if (store.currentChannelId === channelId) return;
   store.setChannel(channelId);
   // 1. join SFU
-  const res = await socket.emitWithAck("join-sfu", { channelId });
+  const res = await socket.emitWithAck("join-sfu", { channelId, serverId });
 
   const { rtpCapabilities, producers: existingProducers } = res as {
     rtpCapabilities: mediasoupClient.types.RtpCapabilities;
@@ -177,16 +181,12 @@ export const leaveVoice = async (socket: Socket) => {
 
 let initialized = false;
 export const initVoiceSocket = (socket: Socket | null) => {
-  if(initialized || socket === null) return;
+  if (initialized || socket === null) return;
   initialized = true;
-  socket.off("participants");
+
   socket.off("user-joined");
   socket.off("user-left");
   socket.off("new-producer");
-
-  socket.on("participants", ({ channelId, users }) => {
-    useVoiceStore.getState().setParticipants(channelId, users);
-  });
 
   socket.on("user-joined", ({ channelId, user }) => {
     useVoiceStore.getState().addUser(channelId, user);
@@ -199,5 +199,19 @@ export const initVoiceSocket = (socket: Socket | null) => {
   socket.on("new-producer", async ({ producerId, channelId }) => {
     if (channelId !== useVoiceStore.getState().currentChannelId) return;
     await consume(socket, producerId);
+  });
+  let timeout: any;
+
+  socket.on("active-speaker", ({ channelId, speakers }) => {
+    const store = useVoiceStore.getState();
+
+    if (store.currentChannelId !== channelId) return;
+
+    store.setActiveSpeaker(channelId,speakers);
+
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      store.setActiveSpeaker(channelId, []);
+    }, 1000);
   });
 };

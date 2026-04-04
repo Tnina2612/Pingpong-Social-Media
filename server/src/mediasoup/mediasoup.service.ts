@@ -3,14 +3,16 @@ import * as mediasoup from "mediasoup";
 
 @Injectable()
 export class MediasoupService {
-  worker: mediasoup.types.Worker;
-  router: mediasoup.types.Router;
+  worker!: mediasoup.types.Worker;
+  router!: mediasoup.types.Router;
 
   rooms = new Map<
     string,
     {
-      users: Map<string,any>;
+      serverId: string;
+      users: Map<string, any>;
       producers: Map<string, any>;
+      audioObserver?: mediasoup.types.AudioLevelObserver;
     }
   >();
   transports = new Map<string, any[]>(); // socketId -> transports[]

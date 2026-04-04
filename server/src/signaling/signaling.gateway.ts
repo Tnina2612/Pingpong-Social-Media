@@ -12,7 +12,7 @@ import { PrismaService } from "src/prisma/prisma.service";
 @WebSocketGateway({ cors: true })
 export class SignalingGateway {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private readonly media: MediasoupService,
@@ -22,16 +22,40 @@ export class SignalingGateway {
   @SubscribeMessage("join-sfu")
   async joinSfu(
     @ConnectedSocket() client: Socket,
-    @MessageBody() { channelId },
+    @MessageBody() { channelId, serverId },
   ) {
-    this.leaveSfu(client);
+    await this.leaveSfu(client);
 
     if (!this.media.rooms.has(channelId)) {
-      this.media.rooms.set(channelId, {
+      const audioObserver = await this.media.router.createAudioLevelObserver({
+        maxEntries: 5,
+        threshold: -65,
+        interval: 800,
+      });
+      const room = {
+        serverId,
         users: new Map(),
         producers: new Map(),
+        audioObserver,
+      };
+
+      audioObserver.on("volumes", (volumes) => {
+        const speakers = volumes
+          .map(({ producer }) => {
+            const data = room.producers.get(producer.id);
+            return data?.user.id;
+          })
+          .filter(Boolean);
+
+        this.server.to(channelId).emit("active-speaker", {
+          channelId,
+          speakers, // 🔥 array
+        });
       });
+
+      this.media.rooms.set(channelId, room);
     }
+
     const userId = client.data.userId;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -49,12 +73,7 @@ export class SignalingGateway {
     client.join(channelId);
     const producers = Array.from(room?.producers.keys() || []);
 
-    const participants = Array.from(room?.users.values() || []);
-    client.emit("participants", {
-      channelId,
-      users: participants,
-    });
-    client.to(channelId).emit("user-joined", {
+    this.server.to(channelId).emit("user-joined", {
       channelId,
       user,
     });
@@ -110,7 +129,9 @@ export class SignalingGateway {
     });
 
     const room = this.media.rooms.get(channelId);
-
+    room?.audioObserver?.addProducer({
+      producerId: producer.id,
+    });
     const user = client.data.user;
     room?.producers.set(producer.id, {
       socketId: client.id,
@@ -121,7 +142,6 @@ export class SignalingGateway {
     client.to(channelId).emit("new-producer", {
       channelId,
       producerId: producer.id,
-
     });
 
     return { id: producer.id };
@@ -194,6 +214,7 @@ export class SignalingGateway {
         }
       });
       const user = room.users.get(client.id);
+
       room.users.delete(client.id);
       this.server.to(roomId).emit("user-left", {
         channelId: roomId,
@@ -230,6 +251,33 @@ export class SignalingGateway {
         user,
       });
       client.leave(roomId);
+      if (room.users.size === 0) {
+        room.audioObserver?.close();
+        this.media.rooms.delete(roomId);
+      }
     });
+  }
+  @SubscribeMessage("get-voice-participants")
+  async getVoiceParticipants(@MessageBody() { serverId }) {
+    const result: Record<string, any[]> = {};
+
+    const channels = await this.prisma.channel.findMany({
+      where: {
+        serverId,
+        type: "VOICE",
+      },
+      select: { id: true },
+    });
+
+    channels.forEach((ch) => {
+      result[ch.id] = [];
+    });
+    this.media.rooms.forEach((room, channelId) => {
+      if (room.serverId !== serverId) return;
+      const users = Array.from(room.users.values());
+      result[channelId] = users;
+    });
+
+    return result;
   }
 }
