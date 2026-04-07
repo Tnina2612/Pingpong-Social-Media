@@ -7,29 +7,76 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { MediasoupService } from "src/mediasoup/mediasoup.service";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @WebSocketGateway({ cors: true })
 export class SignalingGateway {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
-  constructor(private readonly media: MediasoupService) {}
+  constructor(
+    private readonly media: MediasoupService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @SubscribeMessage("join-sfu")
-  joinSfu(@ConnectedSocket() client: Socket, @MessageBody() { channelId }) {
+  async joinSfu(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() { channelId, serverId },
+  ) {
+    await this.leaveSfu(client);
+
     if (!this.media.rooms.has(channelId)) {
-      this.media.rooms.set(channelId, {
-        users: new Set(),
-        producers: new Map(),
+      const audioObserver = await this.media.router.createAudioLevelObserver({
+        maxEntries: 5,
+        threshold: -65,
+        interval: 800,
       });
+      const room = {
+        serverId,
+        users: new Map(),
+        producers: new Map(),
+        audioObserver,
+      };
+
+      audioObserver.on("volumes", (volumes) => {
+        const speakers = volumes
+          .map(({ producer }) => {
+            const data = room.producers.get(producer.id);
+            return data?.user.id;
+          })
+          .filter(Boolean);
+
+        this.server.to(channelId).emit("active-speaker", {
+          channelId,
+          speakers, // 🔥 array
+        });
+      });
+
+      this.media.rooms.set(channelId, room);
     }
 
-    this.media.rooms.get(channelId)?.users.add(client.id);
+    const userId = client.data.userId;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+      },
+    });
+
+    client.data.user = user;
+    const room = this.media.rooms.get(channelId);
+    room?.users.set(client.id, user);
 
     client.join(channelId);
-    const producers = Array.from(
-      this.media.rooms.get(channelId)?.producers.keys() || [],
-    );
+    const producers = Array.from(room?.producers.keys() || []);
+
+    this.server.to(channelId).emit("user-joined", {
+      channelId,
+      user,
+    });
     return {
       joined: true,
       rtpCapabilities: this.media.router.rtpCapabilities,
@@ -82,13 +129,18 @@ export class SignalingGateway {
     });
 
     const room = this.media.rooms.get(channelId);
-
+    room?.audioObserver?.addProducer({
+      producerId: producer.id,
+    });
+    const user = client.data.user;
     room?.producers.set(producer.id, {
       socketId: client.id,
       producer,
+      user,
     });
 
     client.to(channelId).emit("new-producer", {
+      channelId,
       producerId: producer.id,
     });
 
@@ -129,13 +181,17 @@ export class SignalingGateway {
     }
 
     this.media.consumers.get(client.id)?.push(consumer);
-
+    const room = Array.from(this.media.rooms.values()).find((r) =>
+      r.producers.has(producerId),
+    );
+    const producerData = room?.producers.get(producerId);
     return {
       id: consumer.id,
       producerId,
       kind: consumer.kind,
       rtpParameters: consumer.rtpParameters,
       type: consumer.type,
+      user: producerData?.user,
     };
   }
 
@@ -157,11 +213,71 @@ export class SignalingGateway {
           });
         }
       });
+      const user = room.users.get(client.id);
 
       room.users.delete(client.id);
+      this.server.to(roomId).emit("user-left", {
+        channelId: roomId,
+        user,
+      });
     });
 
     this.media.transports.delete(client.id);
     this.media.consumers.delete(client.id);
+  }
+
+  @SubscribeMessage("leave-sfu")
+  async leaveSfu(@ConnectedSocket() client: Socket) {
+    this.media.rooms.forEach((room, roomId) => {
+      if (!room.users.has(client.id)) return;
+
+      const user = room.users.get(client.id);
+
+      room.users.delete(client.id);
+      room.producers.forEach((value, producerId) => {
+        if (value.socketId === client.id) {
+          value.producer.close();
+          room.producers.delete(producerId);
+
+          this.server.to(roomId).emit("producer-closed", {
+            producerId,
+          });
+        }
+      });
+
+      //notify user
+      this.server.to(roomId).emit("user-left", {
+        channelId: roomId,
+        user,
+      });
+      client.leave(roomId);
+      if (room.users.size === 0) {
+        room.audioObserver?.close();
+        this.media.rooms.delete(roomId);
+      }
+    });
+  }
+  @SubscribeMessage("get-voice-participants")
+  async getVoiceParticipants(@MessageBody() { serverId }) {
+    const result: Record<string, any[]> = {};
+
+    const channels = await this.prisma.channel.findMany({
+      where: {
+        serverId,
+        type: "VOICE",
+      },
+      select: { id: true },
+    });
+
+    channels.forEach((ch) => {
+      result[ch.id] = [];
+    });
+    this.media.rooms.forEach((room, channelId) => {
+      if (room.serverId !== serverId) return;
+      const users = Array.from(room.users.values());
+      result[channelId] = users;
+    });
+
+    return result;
   }
 }

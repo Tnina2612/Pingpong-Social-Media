@@ -1,11 +1,12 @@
 import { Plus, Volume2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCreateChannel, useGetAllChannel } from "@/services/chat";
-import type { CreateChannelProps } from "@/types";
+import type { CreateChannelProps, User } from "@/types";
 import { ChannelGroup } from "./ChannelGroup";
 import { ChannelItem } from "./ChannelItem";
 import { useSocketStore } from "@/hooks/useSocketStore";
-import { joinVoice } from "@/utils/signaling";
+import { joinVoice, leaveVoice } from "@/utils/signaling";
+import { useVoiceStore } from "@/hooks/useVoiceStore";
 
 export const AudioChannel = ({ serverId }: { serverId: string }) => {
   const { data: channels = [] } = useGetAllChannel(serverId);
@@ -31,6 +32,19 @@ export const AudioChannel = ({ serverId }: { serverId: string }) => {
       },
     });
   };
+  useEffect(() => {
+    if (!socket || !serverId || !socket.connected) return;
+
+    const fetch = async () => {
+      const data = await socket.emitWithAck("get-voice-participants", {
+        serverId,
+      });
+
+      useVoiceStore.getState().setAllParticipants(data);
+    };
+
+    fetch();
+  }, [serverId, socket]);
 
   return (
     <ChannelGroup title="VOICE CHANNELS">
@@ -39,9 +53,19 @@ export const AudioChannel = ({ serverId }: { serverId: string }) => {
           voiceChannels.map((channel) => (
             <ChannelItem
               key={channel.id}
+              channelId={channel.id}
               name={channel.name}
               icon={<Volume2 size={14} />}
-              onClick={() => socket && joinVoice(socket, channel.id)}
+              onClick={() => {
+                if (!socket) return;
+
+                const current = useVoiceStore.getState().currentChannelId;
+                if (current && current !== channel.id) {
+                  leaveVoice(socket);
+                }
+
+                joinVoice(socket, channel.id, serverId);
+              }}
             />
           ))
         ) : (

@@ -43,6 +43,7 @@ export const ChatChannel = ({ serverId }: { serverId: string }) => {
           textChannels.map((channel) => (
             <ChannelItem
               key={channel.id}
+              channelId={channel.id}
               name={channel.name}
               icon={<MessageSquare size={14} />}
               onClick={() => handleClickChannel(channel)}

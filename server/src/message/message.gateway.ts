@@ -22,7 +22,7 @@ import type { WsJoinChannelPayload, WsLeaveChannelPayload } from "./interfaces";
 })
 export class MessageGateway {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private readonly jwt: JwtService,
@@ -94,6 +94,4 @@ export class MessageGateway {
 
     client.leave(data.channelId);
   }
-
-  
 }
