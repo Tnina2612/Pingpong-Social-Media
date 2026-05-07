@@ -8,6 +8,7 @@ export class FeedService {
   private readonly logger = new Logger(FeedService.name);
   private readonly FEED_CACHE_VERSION = "v1";
   private readonly FEED_CACHE_TTL = 60 * 60 * 24 * 7; // 7 days
+  private readonly RECENT = 600;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -283,7 +284,7 @@ export class FeedService {
       where: {
         status: "PUBLISHED",
         authorId: { not: userId },
-        createdAt: { gte: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+        createdAt: { gte: new Date(Date.now() - this.RECENT * 24 * 60 * 60 * 1000) },
         categories: {
           some: {
             name: { in: user.selectedCategories },
