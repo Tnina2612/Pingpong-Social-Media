@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import type { UploadType } from "./upload";
 import type { Message } from "./message";
+import type { UploadType } from "./upload";
 import type { User } from "./user";
 
 export type UserStatus = "online" | "idle" | "dnd" | "offline";
@@ -14,7 +14,7 @@ export interface AvatarProps {
 
 export interface ChannelItemProps {
   name: string;
-  channelId : string;
+  channelId: string;
   icon?: ReactNode;
   locked?: boolean;
   active?: boolean;

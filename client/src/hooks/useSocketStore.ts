@@ -1,6 +1,6 @@
-import { initVoiceSocket } from "@/utils/signaling";
 import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
+import { initVoiceSocket } from "@/utils/signaling";
 
 interface SocketStore {
   socket: Socket | null;

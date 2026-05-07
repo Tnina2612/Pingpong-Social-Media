@@ -1,11 +1,11 @@
-import { useState, type FC } from "react";
-import { DetailsSidebar, Sidebar } from "../../components/chat";
-import { useGetAllServer } from "@/services/chat";
+import { type FC, useState } from "react";
+import { ChatWindow } from "@/components/chat/ChatWindow";
 import { CreateServerModal } from "@/components/chat/create-server-modal";
 import { useChatStore } from "@/hooks/useChatStore";
-import { ChatWindow } from "@/components/chat/ChatWindow";
+import { useGetAllServer } from "@/services/chat";
+import { DetailsSidebar, Sidebar } from "../../components/chat";
 
-// ─── Main ChatMessage Component ───────────────────────────────────────────────
+// Main ChatMessage Component
 
 export const ChatMessage: FC = () => {
   const { data: allServers } = useGetAllServer();
@@ -14,7 +14,7 @@ export const ChatMessage: FC = () => {
   const currChannel = useChatStore((state) => state.currChannel);
   const setCurrChannel = useChatStore((state) => state.setCurrChannel);
 
-  // Reset channel khi thay đổi server
+  // Reset channel when change server
   const handleSelectServer = (serverId: string) => {
     setActiveServer(serverId);
     setCurrChannel(null);
@@ -30,16 +30,7 @@ export const ChatMessage: FC = () => {
           return (
             <div key={server.id} className="relative group flex items-center">
               {/* Tooltip */}
-              <div
-                className="
-              absolute left-14
-              whitespace-nowrap
-              bg-black text-white text-xs
-              px-2 py-1 rounded
-              opacity-0 group-hover:opacity-100
-              transition pointer-events-none
-            "
-              >
+              <div className="absolute left-14 whitespace-nowrap bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none ">
                 {server.name}
               </div>
 

@@ -1,6 +1,5 @@
-import type { User } from "@/types";
-
 import { create } from "zustand";
+import type { User } from "@/types";
 
 type VoiceState = {
   currentChannelId: string | null;
@@ -41,7 +40,7 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     set((state) => {
       const current = state.participantsByChannel[channelId];
 
-      // 🔥 tránh re-render vô nghĩa
+      // Avoid re-render
       if (JSON.stringify(current) === JSON.stringify(users)) {
         return state;
       }
@@ -53,6 +52,7 @@ export const useVoiceStore = create<VoiceState>((set) => ({
         },
       };
     }),
+
   setAllParticipants: (data) =>
     set((state) => {
       if (

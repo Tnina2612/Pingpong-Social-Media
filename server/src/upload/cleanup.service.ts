@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "src/prisma/prisma.service";
-import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { AttachmentStatus, AttachmentType } from "@prisma/client";
+import { CloudinaryService } from "src/cloudinary/cloudinary.service";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class AttachmentCleanupService {
