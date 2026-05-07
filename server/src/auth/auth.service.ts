@@ -109,6 +109,7 @@ export class AuthService {
         id: user?.id,
         username: user.username,
         avatar: user?.avatar,
+        hasCompletedOnboarding: user.selectedCategories.length > 0,
       },
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -125,7 +126,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
     });
-    if (!user || !user.refreshToken) {
+    if (!user?.refreshToken) {
       throw new ForbiddenException("Invalid credentials");
     }
 
