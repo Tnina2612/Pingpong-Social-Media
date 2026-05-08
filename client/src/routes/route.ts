@@ -2,13 +2,31 @@ import { createBrowserRouter, redirect } from "react-router-dom";
 import { useAuthUser } from "@/hooks";
 import { ErrorPage } from "../errors/error-page";
 
-const authLoader = () => {
+const requireAuthLoader = () => {
   const { accessToken } = useAuthUser.getState();
-  if (!accessToken) {
-    return redirect("/login");
+
+  return accessToken ? null : redirect("/login");
+};
+
+const requireOnboardingState = (
+  shouldBeCompleted: boolean,
+  redirectTo: string,
+) => {
+  const authRedirect = requireAuthLoader();
+  if (authRedirect) return authRedirect;
+
+  const { user } = useAuthUser.getState();
+
+  if (user?.hasCompletedOnboarding === shouldBeCompleted) {
+    return redirect(redirectTo);
   }
+
   return null;
 };
+
+const onboardingLoader = () => requireOnboardingState(true, "/homepage");
+
+const homepageLoader = () => requireOnboardingState(false, "/onboarding");
 
 const emailLoader = (path: string) => {
   const { temporaryEmail } = useAuthUser.getState();
@@ -52,7 +70,7 @@ export const appRouter = createBrowserRouter([
     ErrorBoundary: ErrorPage,
   },
   {
-    loader: authLoader,
+    loader: homepageLoader,
     path: "homepage",
     lazy: async () => {
       const { HomeLayout } = await import("../app/private/homelayout");
@@ -79,6 +97,15 @@ export const appRouter = createBrowserRouter([
     ErrorBoundary: ErrorPage,
   },
   {
+    loader: onboardingLoader,
+    path: "onboarding",
+    lazy: async () => {
+      const { OnboardingPage } = await import("../app/private/onboarding-page");
+      return { Component: OnboardingPage };
+    },
+    ErrorBoundary: ErrorPage,
+  },
+  {
     loader: () => emailLoader("/signup"),
     path: "verify-otp",
     lazy: async () => {
@@ -91,8 +118,9 @@ export const appRouter = createBrowserRouter([
     loader: () => emailLoader("/reset-password"),
     path: "reset-password-otp",
     lazy: async () => {
-      const { ResetPasswordOTP } =
-        await import("../app/private/reset-password-otp");
+      const { ResetPasswordOTP } = await import(
+        "../app/private/reset-password-otp"
+      );
       return { Component: ResetPasswordOTP };
     },
     ErrorBoundary: ErrorPage,

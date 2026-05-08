@@ -52,6 +52,7 @@ export const useCreateComment = () => {
           queryKey: ["getcommentsbypost", variables.postId],
         });
       }
+      // TODO: invalidate getpostbyid?
     },
     onError: async (err: AxiosError) => {
       const errorMessage =

@@ -8,9 +8,9 @@ import {
 import { useState } from "react";
 import { useLike } from "@/services/homepage/like";
 import { useGetPostById } from "@/services/homepage/post";
-import type { PostType } from "@/types";
+import { AttachmentType, type PostType } from "@/types";
 import { formatDate } from "@/utils";
-import { PostModal } from "./postmodal";
+import { PostModal } from "./post-modal";
 
 interface PostProps {
   post: PostType;
@@ -19,7 +19,10 @@ interface PostProps {
 export const Post = ({ post }: PostProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLike, setIsLike] = useState(post.isLiked);
-  const [likeCount, setLikeCount] = useState(post.stats.likeCount);
+  const [likeCount, setLikeCount] = useState(post?.stats?.likeCount || 0);
+  const [commentCount, setCommentCount] = useState(
+    post?.stats?.commentCount || 0,
+  );
   const { data: fullPost } = useGetPostById(post.id, isModalOpen);
   const { mutate: like, isPending } = useLike();
 
@@ -91,7 +94,7 @@ export const Post = ({ post }: PostProps) => {
         {/* Image or Video */}
         {post.attachments && post.attachments.length > 0 && (
           <div className="relative">
-            {post.attachments[0].type == "VIDEO" ? (
+            {post.attachments[0].type === AttachmentType.VIDEO ? (
               <video
                 src={post.attachments[0].url}
                 controls
@@ -114,8 +117,8 @@ export const Post = ({ post }: PostProps) => {
           <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
             <span>👍 {likeCount}</span>
             <span>
-              {post.stats.commentCount}{" "}
-              {post.stats.commentCount > 1 ? "comments" : "comment"} {" · "}
+              {commentCount} {commentCount === 1 ? "comments" : "comment"}{" "}
+              {" · "}
               {Math.floor(likeCount / 3)}{" "}
               {Math.floor(likeCount / 3) > 1 ? "shares" : "share"}{" "}
             </span>

@@ -3,10 +3,10 @@ import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { useSocketStore } from "@/hooks/useSocketStore";
 import { apiClient } from "@/lib";
 import type { User } from "@/types";
 import type { ResponseMessage } from "@/types/response";
-import { useSocketStore } from "@/hooks/useSocketStore";
 
 interface LoginProps {
   email: string;
@@ -18,6 +18,7 @@ interface LoginResponse {
     id: string;
     username: string;
     avatar?: string | null;
+    hasCompletedOnboarding?: boolean;
   };
   accessToken: string;
 }
@@ -32,10 +33,19 @@ export const useLogin = () => {
     },
     onSuccess: async (res) => {
       const { accessToken, user } = res;
-      useAuthUser.getState().setAuthUser(user as User, accessToken);
+      const userWithOnboardingState: User = {
+        ...user,
+        hasCompletedOnboarding: user.hasCompletedOnboarding ?? true,
+      };
+
+      useAuthUser.getState().setAuthUser(userWithOnboardingState, accessToken);
       toast.success("Login successfully");
       connect(accessToken);
-      navigate("/homepage");
+      navigate(
+        userWithOnboardingState.hasCompletedOnboarding
+          ? "/homepage"
+          : "/onboarding",
+      );
     },
     onError: async (err, variables) => {
       const data = err.response?.data as ResponseMessage;
