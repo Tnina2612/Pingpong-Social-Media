@@ -9,32 +9,73 @@ from sentence_transformers import SentenceTransformer
 from transformers import pipeline
 from PIL import Image
 import numpy as np
+from cluster_users import run_community_detection
 
 STREAM_NAME = "ml-stream"
 GROUP_NAME = "ml-workers"
 CONSUMER_NAME = f"worker-{uuid.uuid4()}"
-
-# 1. Initialize Models (Load into RAM once on startup)
-print("Loading ML Models...")
-print("Loading Trust & Safety Models...")
-# Highly optimized toxic comment classifier
-toxicity_classifier = pipeline("text-classification", model="unitary/toxic-bert")
-# Image NSFW classifier
-vision_classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection")
-# all-MiniLM-L6-v2 is extremely fast and generates 384-dimensional vectors
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2') 
-# Zero-shot classifier for automatic categorization
-content_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
 # Define possible feed categories
 CATEGORIES = ["Technology", "Sports", "Music", "Movies", "Gaming", "News", "Programming",
               "Food", "Fashion and beauty", "Business and finance", "Arts and culture",
               "Animal", "Funny", "Science", "Nature", "Politics", "Anime and manga"]
 
-# 2. Database & Redis Connections
-load_dotenv(dotenv_path="../.env")
-engine = create_engine(os.getenv("SQLALCHEMY_DB_URL"))
-redis_conn = Redis(host='localhost', port=6379)
+# 1. Initialize Models (Lazy-loaded on first use to save memory)
+print("Loading ML Models...")
+print("Loading Trust & Safety Models...")
+
+# These are smaller and loaded immediately
+toxicity_classifier = None
+vision_classifier = None
+embedding_model = None
+content_classifier = None
+
+def get_toxicity_classifier():
+    global toxicity_classifier
+    if toxicity_classifier is None:
+        print("[Model] Loading toxicity classifier...")
+        from transformers import pipeline
+        toxicity_classifier = pipeline("text-classification", model="unitary/toxic-bert")
+    return toxicity_classifier
+
+def get_vision_classifier():
+    global vision_classifier
+    if vision_classifier is None:
+        print("[Model] Loading vision classifier...")
+        from transformers import pipeline
+        vision_classifier = pipeline("image-classification", model="Falconsai/nsfw_image_detection")
+    return vision_classifier
+
+def get_embedding_model():
+    global embedding_model
+    if embedding_model is None:
+        print("[Model] Loading embedding model...")
+        from sentence_transformers import SentenceTransformer
+        embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return embedding_model
+
+def get_content_classifier():
+    global content_classifier
+    if content_classifier is None:
+        print("[Model] Loading content classifier (lightweight)...")
+        from transformers import pipeline
+        # Use a smaller, faster zero-shot model instead of bart-large-mnli
+        # facebook/bart-large-mnli is 1.6GB, but we can use a smaller distilled version
+        try:
+            content_classifier = pipeline(
+                "zero-shot-classification",
+                model="cross-encoder/nli-distilroberta-base",
+                device=-1  # CPU only, no GPU
+            )
+        except Exception as e:
+            print(f"[Warning] Could not load distilroberta, falling back to simpler approach: {e}")
+            # Fallback: just use labels directly without ML classification
+            content_classifier = None
+    return content_classifier
+
+# 2. Database & Redis Connections (initialized in main)
+engine = None
+redis_conn = None
 
 def process_new_post(post_id: str, content: str, image_urls: list):
     """
@@ -48,7 +89,8 @@ def process_new_post(post_id: str, content: str, image_urls: list):
 
     # 1. Text Toxicity Check
     if content:
-        tox_res = toxicity_classifier(content)[0]
+        tox_classifier = get_toxicity_classifier()
+        tox_res = tox_classifier(content)[0]
         # 'toxic-bert' returns labels like 'toxic', 'severe_toxic', 'obscene', etc.
         if tox_res['score'] > 0.85 and tox_res['label'] != 'non-toxic':
             status = "REJECTED"
@@ -56,12 +98,13 @@ def process_new_post(post_id: str, content: str, image_urls: list):
 
     # 2. Image NSFW Check
     if status == "PUBLISHED" and image_urls:
+        vision_clf = get_vision_classifier()
         for url in image_urls:
             try:
                 # Download image temporarily into RAM
                 urllib.request.urlretrieve(url, "temp.jpg")
                 img = Image.open("temp.jpg")
-                vision_res = vision_classifier(img)
+                vision_res = vision_clf(img)
                 
                 # Check the top prediction
                 if vision_res[0]['label'] == 'nsfw' and vision_res[0]['score'] > 0.80:
@@ -89,23 +132,29 @@ def process_new_post(post_id: str, content: str, image_urls: list):
         
         # Generate the Embedding Vector
         # Converts the text into an array of 384 floating-point numbers
-        vector = embedding_model.encode(content).tolist()
+        emb_model = get_embedding_model()
+        vector = emb_model.encode(content).tolist()
         
         # Zero-Shot Classification
         # The model guesses which categories fit best and ranks them
-        classification = content_classifier(content, CATEGORIES)
-        
-        # Get ALL categories with confidence above threshold (not just top 1)
-        # This allows posts to be tagged with multiple relevant categories
-        CATEGORY_CONFIDENCE_THRESHOLD = 0.5
-        assigned_categories = []
-        
-        for category, score in zip(classification['labels'], classification['scores']):
-            if score >= CATEGORY_CONFIDENCE_THRESHOLD:
-                assigned_categories.append((category, score))
-        
-        # Sort by confidence descending for logging
-        assigned_categories.sort(key=lambda x: x[1], reverse=True)
+        classifier = get_content_classifier()
+        if classifier:
+            classification = classifier(content, CATEGORIES)
+            
+            # Get ALL categories with confidence above threshold (not just top 1)
+            # This allows posts to be tagged with multiple relevant categories
+            CATEGORY_CONFIDENCE_THRESHOLD = 0.5
+            assigned_categories = []
+            
+            for category, score in zip(classification['labels'], classification['scores']):
+                if score >= CATEGORY_CONFIDENCE_THRESHOLD:
+                    assigned_categories.append((category, score))
+            
+            # Sort by confidence descending for logging
+            assigned_categories.sort(key=lambda x: x[1], reverse=True)
+        else:
+            print("[Warning] Content classifier unavailable, skipping categorization")
+            assigned_categories = []
 
         # 1. Update the Post's vector
         conn.execute(
@@ -170,7 +219,8 @@ def initialize_user_vector(user_id: str, selected_topics: list):
     interest_text = f"User is interested in: {', '.join(selected_topics)}."
     
     # Convert this text into a 384-dimensional mathematical vector
-    vector = embedding_model.encode(interest_text).tolist()
+    emb_model = get_embedding_model()
+    vector = emb_model.encode(interest_text).tolist()
     
     # Save it to the User's record
     with engine.begin() as conn:
@@ -264,6 +314,7 @@ def ensure_consumer_group():
         if "BUSYGROUP" in str(e):
             print(f"[Redis] Consumer group already exists")
         else:
+            print(f"[ERROR] Failed to create consumer group: {e}")
             raise
 
 def handle_event(event_type, data):
@@ -285,7 +336,7 @@ def handle_event(event_type, data):
             interaction_weight=data["weight"]
         )
     elif event_type == "TRIGGER_COMMUNITY_CLUSTERING":
-        # Placeholder: would call cluster_users.run_community_detection()
+        run_community_detection()
         print("[Event] Community clustering triggered (placeholder)")
     else:
         print(f"[Warning] Unknown event type: {event_type}")
@@ -306,8 +357,9 @@ def start_stream_worker():
             for stream, msgs in messages:
                 for msg_id, fields in msgs:
                     try:
-                        event_type = fields[b"type"].decode()
-                        data = json.loads(fields[b"data"])
+                        # With decode_responses=True, keys and values are already strings
+                        event_type = fields["type"]
+                        data = json.loads(fields["data"])
 
                         print(f"[Event] {event_type} received")
 
@@ -325,6 +377,31 @@ def start_stream_worker():
 # 3. Start the Worker loop
 if __name__ == '__main__':
     print("Starting ML Worker (Redis Streams)...")
+    
+    try:
+        print("[Init] Loading environment variables...")
+        load_dotenv(dotenv_path="../.env")
+        
+        db_url = os.getenv("SQLALCHEMY_DB_URL")
+        if not db_url:
+            print("[ERROR] SQLALCHEMY_DB_URL not set in .env file")
+            exit(1)
 
-    ensure_consumer_group()
-    start_stream_worker()
+        print("[Init] Connecting to PostgreSQL database...")
+        engine = create_engine(db_url)
+        print("[Init] Database engine created successfully")
+        
+        print("[Init] Connecting to Redis...")
+        redis_conn = Redis(host='localhost', port=6379, decode_responses=True)
+        redis_conn.ping()
+        print("[Init] Redis connection successful")
+        
+        ensure_consumer_group()
+        start_stream_worker()
+    except KeyboardInterrupt:
+        print("\n[Worker] Shutting down gracefully...")
+    except Exception as e:
+        print(f"[FATAL ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        exit(1)

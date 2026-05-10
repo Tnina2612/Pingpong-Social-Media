@@ -2,19 +2,39 @@ import os
 import uuid
 import networkx as nx
 from community import community_louvain
+from dotenv import load_dotenv
 from redis import Redis
 from sqlalchemy import create_engine, text
 import json
 
-DB_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DB_URL)
-redis_conn = Redis(host='localhost', port=6379)
+# Global connections (initialized lazily in functions)
+_engine = None
+_redis_conn = None
+
+def _get_engine():
+    """Lazy-load database engine on first use."""
+    global _engine
+    if _engine is None:
+        load_dotenv(dotenv_path="../.env")
+        db_url = os.getenv("SQLALCHEMY_DB_URL")
+        if not db_url:
+            raise RuntimeError("SQLALCHEMY_DB_URL not set in .env")
+        _engine = create_engine(db_url)
+    return _engine
+
+def _get_redis():
+    """Lazy-load Redis connection on first use."""
+    global _redis_conn
+    if _redis_conn is None:
+        _redis_conn = Redis(host='localhost', port=6379)
+    return _redis_conn
 
 def get_graph_hash():
     """
     Compute a hash of the current friendship graph to detect changes.
     Returns tuple (num_edges, hash) for quick delta detection.
     """
+    engine = _get_engine()
     with engine.connect() as conn:
         edge_count = conn.execute(text("""
             SELECT COUNT(*) as count FROM "Friendship" WHERE status = 'ACCEPTED'
@@ -42,6 +62,7 @@ def should_recalculate_clusters():
     """
     try:
         # Fetch last state from Redis
+        redis_conn = _get_redis()
         last_state_json = redis_conn.get('clustering:last_graph_state')
         
         if not last_state_json:
@@ -67,6 +88,7 @@ def should_recalculate_clusters():
 
 def save_graph_state(edge_count: int, graph_hash: str):
     """Save the current graph state for delta detection using Redis."""
+    redis_conn = _get_redis()
     state = {
         'edge_count': edge_count,
         'hash': graph_hash,
@@ -91,6 +113,7 @@ def run_community_detection():
     print("Fetching social graph from database...")
     
     # --- 1. Fetch the Data ---
+    engine = _get_engine()
     with engine.connect() as conn:
         # Fetch all accepted friendships (Edges)
         edges_result = conn.execute(text("""
@@ -134,6 +157,7 @@ def run_community_detection():
 
     # --- 4. Update PostgreSQL ---
     print("Saving communities to the database...")
+    engine = _get_engine()
     with engine.begin() as conn:
         # Clear old communities (optional: you could also update them to track history)
         conn.execute(text('UPDATE "User" SET "communityId" = NULL'))

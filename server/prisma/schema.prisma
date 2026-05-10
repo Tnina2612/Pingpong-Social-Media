@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  extensions = [vector] // REQUIRED for pgvector
+  extensions = [prisma_postgres, pgvector(map: "vector")] // REQUIRED for pgvector
 }
 
 model User {
